@@ -1,0 +1,16 @@
+[project]
+authors = ["Josse Van Delm <josse.vandelm@gmail.com>"]
+channels = ["conda-forge", "kuleuven-micas"]
+description = "naxirzag-artifacts"
+name = "naxirzag-artifacts"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+snax-cluster = "==0.2.8"
+python = "3.12.*"
+
+[pypi-dependencies]
+zigzag-dse = "==3.8.1"
