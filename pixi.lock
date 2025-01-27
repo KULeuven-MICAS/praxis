@@ -73,7 +73,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/f2/53/9465dedf2d69fe26008e7732cf6e0a385e387c240869e7d54eed49782a3c/typeguard-4.4.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0f/dd/84f10e23edd882c6f968c21c2434fe67bd4a528967067515feca9e611e5e/tzdata-2025.1-py2.py3-none-any.whl
       - pypi: git+https://github.com/xdslproject/xdsl.git@5c96c6efba255094871aabf1872e14ce706f9917
-      - pypi: git+https://github.com/KULeuven-MICAS/zigzag@14fed7747aea074798949bd66bc9ff4de0c906e8
+      - pypi: git+https://github.com/KULeuven-MICAS/zigzag@31b8b417eadd98b51f9e226556ac41ccecfd26e3
       - pypi: ./
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -957,7 +957,7 @@ packages:
   purls: []
   size: 89141
   timestamp: 1641346969816
-- pypi: git+https://github.com/KULeuven-MICAS/zigzag@14fed7747aea074798949bd66bc9ff4de0c906e8
+- pypi: git+https://github.com/KULeuven-MICAS/zigzag@31b8b417eadd98b51f9e226556ac41ccecfd26e3
   name: zigzag-dse
   version: 3.8.1
   requires_dist:
