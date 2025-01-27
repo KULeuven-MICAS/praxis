@@ -1,4 +1,5 @@
 import os
+import importlib.resources
 
 from xdsl.dialects import builtin, memref
 from xdsl.dialects.linalg import GenericOp
@@ -127,11 +128,8 @@ class LinalgToStreamTranslator(RewritePattern):
             f.write(yaml.dump(workload, sort_keys=False))
 
 
-        hardware_path = zigzag.inputs.hardware.__path__._path[0] # pyright: ignore
-        hardware_path = os.path.join(hardware_path, "gemm_l1.yaml")
-
-        mapping_path = zigzag.inputs.mapping.__path__._path[0] # pyright: ignore
-        mapping_path = os.path.join(mapping_path, "gemm_l1.yaml")
+        hardware_path = importlib.resources.files('zigzag.inputs.hardware') / 'gemm_l1.yaml'
+        mapping_path = importlib.resources.files('zigzag.inputs.mapping') / 'gemm_l1.yaml'
 
         # add stream id attribute to the generic op
         generic_op.attributes["zigzag_stream_id"] = IntAttr(0)
