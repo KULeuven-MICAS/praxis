@@ -11,6 +11,8 @@ version = "0.1.0"
 [dependencies]
 snax-cluster = "==0.2.8"
 python = "3.12.*"
+pyright = ">=1.1.392.post0,<2"
+pyyaml = ">=6.0.2,<7"
 
 [pypi-dependencies]
 naxirzag = {path = "./", editable = true}
