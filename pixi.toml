@@ -14,3 +14,6 @@ python = "3.12.*"
 
 [pypi-dependencies]
 zigzag-dse = "==3.8.1"
+snax-mlir = { git = "https://github.com/KULeuven-MICAS/snax-mlir", rev="f5fb6a3418ee5066c8feb7c449705f57c68a0ae1" }
+
+
