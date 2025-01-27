@@ -1,3 +1,5 @@
+import os
+
 from xdsl.dialects import builtin, memref
 from xdsl.dialects.linalg import GenericOp
 from xdsl.context import MLContext
@@ -13,6 +15,10 @@ from xdsl.dialects.builtin import ShapedType, IntegerType, IntAttr
 from dataclasses import dataclass
 
 import yaml
+
+import zigzag.inputs.hardware
+import zigzag.inputs.mapping
+import zigzag.api
 
 
 class LinalgToStreamTranslator(RewritePattern):
@@ -120,6 +126,12 @@ class LinalgToStreamTranslator(RewritePattern):
         with open("workload.yaml", "w") as f:
             f.write(yaml.dump(workload, sort_keys=False))
 
+
+        hardware_path = zigzag.inputs.hardware.__path__._path[0] # pyright: ignore
+        hardware_path = os.path.join(hardware_path, "gemm_l1.yaml")
+
+        mapping_path = zigzag.inputs.mapping.__path__._path[0] # pyright: ignore
+        mapping_path = os.path.join(mapping_path, "gemm_l1.yaml")
 
         # add stream id attribute to the generic op
         generic_op.attributes["zigzag_stream_id"] = IntAttr(0)
