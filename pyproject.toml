@@ -1,0 +1,10 @@
+[project]
+name = "naxirzag"
+description = "naxirzag"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT License" }
+version = "0.0.1"
+
+[project.scripts]
+naxirzag-opt = "naxirzag.tools.naxirzag_main:main"
