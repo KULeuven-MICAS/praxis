@@ -16,7 +16,6 @@ pyyaml = ">=6.0.2,<7"
 
 [pypi-dependencies]
 naxirzag = {path = "./", editable = true}
-zigzag-dse = "==3.8.1"
+zigzag-dse = { git = "https://github.com/KULeuven-MICAS/zigzag", rev="14fed7747aea074798949bd66bc9ff4de0c906e8" }
 snax-mlir = { git = "https://github.com/KULeuven-MICAS/snax-mlir", rev="f5fb6a3418ee5066c8feb7c449705f57c68a0ae1" }
-
 
