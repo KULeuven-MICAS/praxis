@@ -12,6 +12,8 @@ from xdsl.pattern_rewriter import (
 from xdsl.dialects.builtin import ShapedType, IntegerType, IntAttr
 from dataclasses import dataclass
 
+import yaml
+
 
 class LinalgToStreamTranslator(RewritePattern):
 
@@ -41,6 +43,7 @@ class LinalgToStreamTranslator(RewritePattern):
         indexing_maps = [shaped_inputs[0][1], shaped_inputs[1][1], output_map]
 
         zigzag_description = dict()
+        zigzag_description["id"] = 0
 
         # for now, set operator to default type
         zigzag_description["operator_type"] = "default"
@@ -108,23 +111,15 @@ class LinalgToStreamTranslator(RewritePattern):
 
         # operand source (use default of no source for now)
         zigzag_description["operand_source"] = dict()
-        zigzag_description["operand_source"]["W"] = []
-        zigzag_description["operand_source"]["I"] = []
+        zigzag_description["operand_source"]["W"] = 0
+        zigzag_description["operand_source"]["I"] = 0
 
-        # constant operands (use default of all constant operands for now)
-        zigzag_description["constant_operands"] = dict()
-        zigzag_description["constant_operands"] = ["I", "W"]
-
-        # padding (use default of 0 padding for now)
         # affects last two indices of input I
-        zigzag_description["padding"] = dict()
-        zigzag_description["padding"][str(indexing_maps[0].results[0]).upper()] = (0, 0)
-        zigzag_description["padding"][str(indexing_maps[0].results[1]).upper()] = (0, 0)
-        workload = dict()
-        workload[0] = zigzag_description
+        workload = [zigzag_description]
 
         with open("workload.yaml", "w") as f:
-            f.write(f"workload = {workload}")
+            f.write(yaml.dump(workload, sort_keys=False))
+
 
         # add stream id attribute to the generic op
         generic_op.attributes["zigzag_stream_id"] = IntAttr(0)
