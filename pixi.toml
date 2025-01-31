@@ -1,16 +1,17 @@
 [project]
 authors = ["Josse Van Delm <josse.vandelm@gmail.com>"]
-channels = ["conda-forge", "kuleuven-micas", "bioconda", "jossevandelm"]
-description = "naxirzag-artifacts"
-name = "naxirzag-artifacts"
+channels = ["conda-forge", "kuleuven-micas", "bioconda"]
+description = "naxirzag"
+name = "naxirzag"
 platforms = ["linux-64"]
 version = "0.1.0"
 
-[tasks]
+[activation]
+scripts = ["editable_install.sh"]
 
 [dependencies]
-snax-cluster-prebuilt = { version = "==0.2.8", channel = "jossevandelm" }
-snax-cluster-dev = { version = "==0.2.8", channel = "jossevandelm" }
+snax-cluster-prebuilt = "==0.2.8"
+snax-cluster-dev = "==0.2.8"
 python = "3.12.*"
 pyyaml = ">=6.0.2,<7"
 mlir = { version = "==19.1.1.d401987fe349a87c53fe25829215b80b70c0c1a", channel = "kuleuven-micas" }
@@ -24,3 +25,4 @@ vcd-to-csv = { version = ">=0.1.0,<0.2", channel = "kuleuven-micas" }
 naxirzag = {path = "./", editable = true}
 zigzag-dse = { git = "https://github.com/KULeuven-MICAS/zigzag", rev="13a37c26ab7f9be9682740f65cf546f01886618c" }
 snax-mlir = { git = "https://github.com/KULeuven-MICAS/snax-mlir", rev="f5fb6a3418ee5066c8feb7c449705f57c68a0ae1" }
+uv = ">=0.5.26,<0.6"
