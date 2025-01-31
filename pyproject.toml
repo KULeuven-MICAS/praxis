@@ -9,10 +9,6 @@ version = "0.0.1"
 [project.scripts]
 naxirzag-opt = "naxirzag.tools.naxirzag_main:main"
 
-[tool.setuptools.packages.find]
-where = ["naxirzag"]
-
-
 [tool.pixi.project]
 authors = ["Josse Van Delm <josse.vandelm@gmail.com>"]
 channels = ["conda-forge", "kuleuven-micas", "bioconda"]
