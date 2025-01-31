@@ -6,8 +6,9 @@ name = "naxirzag"
 platforms = ["linux-64"]
 version = "0.1.0"
 
-[activation]
-scripts = ["editable_install.sh"]
+[pypi-dependencies]
+snax-mlir = { path = "./snax-mlir", editable = true }
+zigzag-dse = { path = "./zigzag", editable = true }
 
 [dependencies]
 snax-cluster-prebuilt = "==0.2.8"
