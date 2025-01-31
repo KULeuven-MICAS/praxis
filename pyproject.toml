@@ -8,3 +8,29 @@ version = "0.0.1"
 
 [project.scripts]
 naxirzag-opt = "naxirzag.tools.naxirzag_main:main"
+
+[tool.setuptools.packages.find]
+where = ["naxirzag"]
+
+
+[tool.pixi.project]
+authors = ["Josse Van Delm <josse.vandelm@gmail.com>"]
+channels = ["conda-forge", "kuleuven-micas", "bioconda"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+naxirzag = { path = "./", editable = true }
+snax-mlir = { path = "./snax-mlir", editable = true }
+zigzag-dse = { path = "./zigzag", editable = true }
+
+[tool.pixi.dependencies]
+snax-cluster-prebuilt = "==0.2.8"
+snax-cluster-dev = "==0.2.8"
+python = "3.12.*"
+mlir = { version = "==19.1.1.d401987fe349a87c53fe25829215b80b70c0c1a", channel = "kuleuven-micas" }
+clang = ">=19.1.1, <20"
+lld = ">=19.1.1, <20"
+snakemake-minimal="*"
+pyright = ">=1.1.390,<2"
+vcd-to-csv = { version = ">=0.1.0,<0.2", channel = "kuleuven-micas" }
+
