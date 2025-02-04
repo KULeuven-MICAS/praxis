@@ -17,7 +17,7 @@ from xdsl.dialects.tensor import EmptyOp
 from xdsl.printer import Printer
 
 
-def matmul(m=16, n=16, k=16):
+def matmul(m=32, n=32, k=32):
     # Define Variables For Program:
 
     a_type = TensorType(i8, (m, k))
@@ -64,15 +64,20 @@ def matmul(m=16, n=16, k=16):
     function = FuncOp.from_region("snax_main", [], res_types, func_body)
     return ModuleOp([function])
 
-
-if __name__ == "__main__":
+def main(m : int , n: int , k: int, filename : str | None = None):
     # Get the name of the current Python script and replace its extension with .mlir
-    script_name = os.path.basename(__file__)
-    mlir_filename = os.path.splitext(script_name)[0] + ".mlir"
-
+    if filename is None:
+        script_name = os.path.basename(__file__)
+        mlir_filename = os.path.splitext(script_name)[0] + ".mlir"
+    else:
+        mlir_filename = filename
     # Generate IR and write it to the specified MLIR file
     output = StringIO()
     printer = Printer(stream=output)
-    printer.print(matmul())
+    printer.print(matmul(m=m, n=n, k=k))
     with open(mlir_filename, "w") as output_file:
         output_file.write(output.getvalue())
+
+
+if __name__ == "__main__":
+    main(16, 16, 16)
