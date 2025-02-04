@@ -1,9 +1,13 @@
 import importlib.resources
+from typing import Any, cast
 
 from xdsl.dialects import builtin
 from xdsl.dialects.linalg import GenericOp
 from xdsl.context import MLContext
+from xdsl.ir import Block, ErasedSSAValue, Region, SSAValue
 from xdsl.ir.affine import AffineDimExpr, AffineExpr, AffineMap
+from xdsl.irdl import Operation
+from xdsl.parser import DenseArrayBase
 from xdsl.passes import ModulePass
 from xdsl.pattern_rewriter import (
     PatternRewriter,
@@ -11,11 +15,47 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
     op_type_rewrite_pattern,
 )
-from xdsl.dialects.builtin import ShapedType, IntegerType, IntAttr
+from xdsl.dialects.builtin import IntegerAttr, ModuleOp, NoneAttr, ShapedType, IntegerType, IntAttr, UnitAttr
+from xdsl.dialects.transform import NamedSequenceOp, TileOp, SequenceOp, MatchOp, YieldOp, AnyOpType, OperationType
 from dataclasses import dataclass
 
+from xdsl.rewriter import InsertPoint
 import yaml
 
+from zigzag.cost_model.cost_model import CostModelEvaluation
+from zigzag.datatypes import UnrollFactor
+import zigzag.inputs.hardware
+import zigzag.inputs.mapping
+from zigzag.api import get_hardware_performance_zigzag
+from zigzag.mapping.utils import get_temporal_loops, get_spatial_loops
+
+def process_cme(cme: CostModelEvaluation, target: SSAValue):
+    spatial_loops = get_spatial_loops(cme)
+    temporal_loops = get_temporal_loops(cme)
+
+    all_tiling_ops: list[TileOp] = []
+
+    tile_sizes = {x: 1 for x in cme.layer.layer_dims}
+
+    for dim, size, mem_layer in spatial_loops:
+        tile_sizes[dim] = int(tile_sizes[dim] * size[1])
+
+    for dim, size, mem_layer in temporal_loops:
+        if 'l3' in mem_layer:
+            tile_op = TileOp(
+                target=target,
+                dynamic_sizes=[],
+                scalable_sizes=DenseArrayBase.create_dense_int(IntegerType(1), [0, 0, 0]),
+                static_sizes=DenseArrayBase.create_dense_int(IntegerType(64), [tile_sizes[dim] for dim in cme.layer.layer_dims]),
+            )
+            all_tiling_ops.append(tile_op)
+        tile_sizes[dim] = int(tile_sizes[dim] * size[1])
+
+    # link them together
+    for i in range(len(all_tiling_ops) - 1):
+        all_tiling_ops[i].operands[0] = all_tiling_ops[i+1].tiled_linalg_op
+
+    return all_tiling_ops
 
 class LinalgToStreamTranslator(RewritePattern):
     @op_type_rewrite_pattern
@@ -46,7 +86,7 @@ class LinalgToStreamTranslator(RewritePattern):
         zigzag_description["id"] = 0
 
         # for now, set operator to default type
-        zigzag_description["operator_type"] = "default"
+        zigzag_description["operator_type"] = "Gemm"
 
         # construct equation
         output_access = "O"
@@ -68,9 +108,9 @@ class LinalgToStreamTranslator(RewritePattern):
             input_w_access += f"[{str(map)}]"
 
         # assume MAC
-        zigzag_description[
-            "equation"
-        ] = f"{output_access} += {input_i_access} * {input_w_access}"
+        zigzag_description["equation"] = (
+            f"{output_access}+={input_i_access}*{input_w_access}"
+        )
 
         # extract dimension_relations
         # for matmul, this is empty
@@ -89,10 +129,13 @@ class LinalgToStreamTranslator(RewritePattern):
         memref_shapes = [shape.data for op in operands for shape in op.type.shape.data]
         iteration_bounds = inverse_map.eval(memref_shapes, [])
 
-        zigzag_description["loop_dim_size"] = dict()
+        zigzag_description["loop_dims"] = [f"D{i}" for i in range(len(iteration_bounds))]
+        zigzag_description["loop_sizes"] = [x for x in iteration_bounds]
 
-        for i, bound in enumerate(iteration_bounds):
-            zigzag_description["loop_dim_size"][f"D{i}"] = bound
+        #zigzag_description["loop_dim_size"] = dict()
+
+        #for i, bound in enumerate(iteration_bounds):
+            #zigzag_description["loop_dim_size"][f"D{i}"] = bound
 
         # extract operand precision
         widths = []
@@ -120,11 +163,49 @@ class LinalgToStreamTranslator(RewritePattern):
         with open("workload.yaml", "w") as f:
             f.write(yaml.dump(workload, sort_keys=False))
 
-        importlib.resources.files("zigzag.inputs.hardware") / "gemm_l1.yaml"
-        importlib.resources.files("zigzag.inputs.mapping") / "gemm_l1.yaml"
+        hardware_path = importlib.resources.files('zigzag.inputs.hardware') / 'gemm_l1_l3.yaml'
+        mapping_path = importlib.resources.files('zigzag.inputs.mapping') / 'gemm_l1_l3.yaml'
+
+        energy_total, latency_total, cmes = get_hardware_performance_zigzag("workload.yaml", str(hardware_path), str(mapping_path))
+        cmes = cast(list[tuple[CostModelEvaluation, Any]], cmes[0][1])
+
+
+        # Manually speficy tiling sequence
+        transform_inputs = [
+            AnyOpType(),
+            OperationType("linalg.generic"),
+        ]
+
+        function_type = builtin.FunctionType.from_lists(transform_inputs, [])
+        sequence_op = NamedSequenceOp(
+            "__transform_main", function_type, Region(Block([YieldOp()], arg_types=transform_inputs))
+        )
+
+        module_op = generic_op
+        while not isinstance(module_op, ModuleOp):
+            module_op = module_op.parent_op()
+            assert module_op
+
+        rewriter.insert_op(sequence_op, InsertPoint.at_end(module_op.body.block))
+
+        # still assuming one layer for now
+        id = 0
+
+        structured_match = MatchOp(
+            target=sequence_op.body.block.args[0],
+            op_attrs={f"zigzag_id": IntegerAttr.from_index_int_value(id)},
+        )
+        rewriter.insert_op(
+            structured_match,
+            insertion_point=InsertPoint.at_start(sequence_op.body.block),
+        )
+        
+        all_tiling_ops = process_cme(cmes[0][0], structured_match.results[0])
 
         # add stream id attribute to the generic op
-        generic_op.attributes["zigzag_stream_id"] = IntAttr(0)
+        generic_op.attributes[f"zigzag_id"] = IntegerAttr.from_index_int_value(id)
+
+        rewriter.insert_op(list(reversed(all_tiling_ops)), InsertPoint.after(structured_match))
 
 
 @dataclass(frozen=True)
