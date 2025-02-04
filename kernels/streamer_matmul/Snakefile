@@ -1,6 +1,6 @@
 from util.snake.configs import get_snax_gemmx_config
 
-config = get_snax_gemmx_config()
+config = get_snax_gemmx_config(snax_mlir_path="../../snax-mlir")
 config["snaxoptflags"] = ",".join(
     [
         "preprocess",
@@ -36,7 +36,7 @@ config["mlirtransformflags"] = [
 
 module snax_rules:
     snakefile:
-        "../snax-mlir/util/snake/snax.smk"
+        "../../snax-mlir/util/snake/snax.smk"
     config:
         config
 
