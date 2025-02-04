@@ -2051,7 +2051,7 @@ packages:
 - pypi: ./
   name: naxirzag
   version: 0.0.1
-  sha256: e0704fe389d0c6c89285638c11bed28b38f2cbba08d00aae036af8f50119f007
+  sha256: d9939b77cedb3bcdcb4bb74f6622fade099adfeb37b3bc422d598937f56e340b
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/nbformat-5.10.4-pyhd8ed1ab_1.conda
