@@ -1,5 +1,6 @@
 from util.snake.configs import get_snax_gemmx_config
 from quantized_matmul import main as get_quantized_matmul
+from aggregate import aggregate_results
 
 config = get_snax_gemmx_config(snax_mlir_path="../../snax-mlir")
 config["snaxoptflags"] = ",".join(
@@ -53,10 +54,17 @@ values = [16,32]
 # Rules
 rule all:
     input:
-        expand("{file}_{m}_{n}_{k}_traces.json", file=files, m=values, n=values, k=values),
-        "tiled_quantized_matmul_traces.json"
+        "tiled_quantized_matmul_traces.json",
+        "quantized_matmul_results.csv"
 
-#rule get_cycles:
+rule get_dataframe:
+    input:
+        expand("{file}_{m}_{n}_{k}_traces.json", file=files, m=values, n=values, k=values),
+    output:
+        "{file}_results.csv"
+    run:
+        aggregate_results(wildcards.file)
+        
 
 rule generate_quantized_matmul:
     output:
