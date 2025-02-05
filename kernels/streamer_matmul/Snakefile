@@ -1,4 +1,5 @@
 from util.snake.configs import get_snax_gemmx_config
+from quantized_matmul import main as get_quantized_matmul
 
 config = get_snax_gemmx_config(snax_mlir_path="../../snax-mlir")
 config["snaxoptflags"] = ",".join(
@@ -20,8 +21,10 @@ config["snaxoptflags"] = ",".join(
         "dart-layout-resolution",
         "convert-dart-to-snax-stream",
         "convert-linalg-to-accfg",
+        "test-add-mcycle-around-launch",
         "convert-accfg-to-csr",
         "snax-copy-to-dma",
+        "snax-lower-mcycle",
         "memref-to-snax",
         "snax-to-func",
         "clear-memory-space",
@@ -43,21 +46,27 @@ module snax_rules:
 
 use rule * from snax_rules as snax_*
 
+files = ["quantized_matmul"]
 
-files = ["quantized_matmul", "tiled_quantized_matmul"]
-
+values = [16,32]
 
 # Rules
 rule all:
     input:
-        expand("{file}_traces.json", file=files),
+        expand("{file}_{m}_{n}_{k}_traces.json", file=files, m=values, n=values, k=values),
+        "tiled_quantized_matmul_traces.json"
 
+#rule get_cycles:
 
 rule generate_quantized_matmul:
     output:
-        "quantized_matmul.mlir",
-    script:
-        "quantized_matmul.py"
+        "quantized_matmul_{m}_{n}_{k}.mlir",
+    wildcard_constraints:
+        m=r"\d+",
+        n=r"\d+",
+        k=r"\d+"
+    run:
+        get_quantized_matmul(int(wildcards.m), int(wildcards.n), int(wildcards.k), f"quantized_matmul_{wildcards.m}_{wildcards.n}_{wildcards.k}.mlir")
 
 
 rule generate_tiled_quantized_matmul:
