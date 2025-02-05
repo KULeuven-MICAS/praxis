@@ -1,7 +1,6 @@
-import os
 import importlib.resources
 
-from xdsl.dialects import builtin, memref
+from xdsl.dialects import builtin
 from xdsl.dialects.linalg import GenericOp
 from xdsl.context import MLContext
 from xdsl.ir.affine import AffineDimExpr, AffineExpr, AffineMap
@@ -17,16 +16,10 @@ from dataclasses import dataclass
 
 import yaml
 
-import zigzag.inputs.hardware
-import zigzag.inputs.mapping
-import zigzag.api
-
 
 class LinalgToStreamTranslator(RewritePattern):
-
     @op_type_rewrite_pattern
     def match_and_rewrite(self, generic_op: GenericOp, rewriter: PatternRewriter):
-
         if len(generic_op.outputs) != 1:
             return
         if not isinstance(generic_op.outputs[0].type, ShapedType):
@@ -75,9 +68,9 @@ class LinalgToStreamTranslator(RewritePattern):
             input_w_access += f"[{str(map)}]"
 
         # assume MAC
-        zigzag_description["equation"] = (
-            f"{output_access} += {input_i_access} * {input_w_access}"
-        )
+        zigzag_description[
+            "equation"
+        ] = f"{output_access} += {input_i_access} * {input_w_access}"
 
         # extract dimension_relations
         # for matmul, this is empty
@@ -127,18 +120,18 @@ class LinalgToStreamTranslator(RewritePattern):
         with open("workload.yaml", "w") as f:
             f.write(yaml.dump(workload, sort_keys=False))
 
-
-        hardware_path = importlib.resources.files('zigzag.inputs.hardware') / 'gemm_l1.yaml'
-        mapping_path = importlib.resources.files('zigzag.inputs.mapping') / 'gemm_l1.yaml'
+        importlib.resources.files("zigzag.inputs.hardware") / "gemm_l1.yaml"
+        importlib.resources.files("zigzag.inputs.mapping") / "gemm_l1.yaml"
 
         # add stream id attribute to the generic op
         generic_op.attributes["zigzag_stream_id"] = IntAttr(0)
 
+
 @dataclass(frozen=True)
 class LinalgToStream(ModulePass):
-
     name = "linalg-to-stream"
 
     def apply(self, ctx: MLContext, op: builtin.ModuleOp) -> None:
-
-        PatternRewriteWalker(LinalgToStreamTranslator(), apply_recursively=False).rewrite_module(op)
+        PatternRewriteWalker(
+            LinalgToStreamTranslator(), apply_recursively=False
+        ).rewrite_module(op)

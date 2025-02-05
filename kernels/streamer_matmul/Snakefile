@@ -47,9 +47,11 @@ module snax_rules:
 
 use rule * from snax_rules as snax_*
 
+
 files = ["quantized_matmul"]
 
-values = [16,32]
+values = [16, 32]
+
 
 # Rules
 rule all:
@@ -72,9 +74,14 @@ rule generate_quantized_matmul:
     wildcard_constraints:
         m=r"\d+",
         n=r"\d+",
-        k=r"\d+"
+        k=r"\d+",
     run:
-        get_quantized_matmul(int(wildcards.m), int(wildcards.n), int(wildcards.k), f"quantized_matmul_{wildcards.m}_{wildcards.n}_{wildcards.k}.mlir")
+        get_quantized_matmul(
+            int(wildcards.m),
+            int(wildcards.n),
+            int(wildcards.k),
+            f"quantized_matmul_{wildcards.m}_{wildcards.n}_{wildcards.k}.mlir",
+        )
 
 
 rule generate_tiled_quantized_matmul:
