@@ -7,6 +7,13 @@ cd naxirzag
 pixi shell
 ```
 Check if it works!:
+
+Either you can try out an example from `kernels`
 ```shell
-naxirzag-opt -p linalg-to-stream tests/quantized_matmul.mlir
+cd kernels/streamer_matmul
+snakemake -c 8 all
+```
+Or run the `tests`:
+```
+lit -vv tests/filecheck
 ```
