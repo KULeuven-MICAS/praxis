@@ -18,6 +18,6 @@ cd kernels/streamer_matmul
 snakemake -c 8 all
 ```
 Or run the `tests`:
-```
+```shell
 lit -vv tests/filecheck
 ```
