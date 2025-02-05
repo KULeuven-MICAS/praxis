@@ -110,11 +110,6 @@ def generate_zigzag_workload(generic_op: GenericOp):
     zigzag_description["loop_dims"] = [f"D{i}" for i in range(len(iteration_bounds))]
     zigzag_description["loop_sizes"] = [x for x in iteration_bounds]
 
-    # zigzag_description["loop_dim_size"] = dict()
-
-    # for i, bound in enumerate(iteration_bounds):
-    # zigzag_description["loop_dim_size"][f"D{i}"] = bound
-
     # extract operand precision
     widths = []
     for op in operands:
