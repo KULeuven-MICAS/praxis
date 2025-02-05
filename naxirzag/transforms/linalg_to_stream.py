@@ -192,13 +192,13 @@ class LinalgToStreamTranslator(RewritePattern):
             importlib.resources.files("zigzag.inputs.mapping") / "gemm_l1_l3.yaml"
         )
 
-        #energy_total, latency_total, cmes = get_hardware_performance_zigzag(
         returned_values = get_hardware_performance_zigzag(
             "workload.yaml", str(hardware_path), str(mapping_path)
         )
-        # The function can return 5 or 3 values
+
+        # The function can return 5 or 3 values, we want 3
         assert len(returned_values) == 3
-        energy_total, latency_total, cmes =  returned_values
+        energy_total, latency_total, cmes = returned_values
         cmes = cast(list[tuple[CostModelEvaluation, Any]], cmes[0][1])
 
         # for now, the assumption is 1 layer, with the following id:
