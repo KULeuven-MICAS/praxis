@@ -1,7 +1,11 @@
 {
-  "include": ["."],
+  "include": [
+    "."
+  ],
   "venvPath": ".",
   "venv": ".venv",
-	"extraPaths": ["./snax-mlir", "./zigzag"],
+  "extraPaths": [
+    "./snax-mlir",
+    "./zigzag"
+  ],
 }
-
