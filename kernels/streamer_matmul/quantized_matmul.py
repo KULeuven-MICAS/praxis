@@ -8,6 +8,7 @@ from xdsl.dialects.builtin import (
     DenseIntOrFPElementsAttr,
     ModuleOp,
     TensorType,
+    UnitAttr,
     i8,
     i32,
 )
@@ -62,7 +63,7 @@ def matmul(m=32, n=32, k=32):
         ReturnOp(result, golden)
 
     function = FuncOp.from_region("snax_main", [], res_types, func_body)
-    return ModuleOp([function])
+    return ModuleOp([function], {"transform.with_named_sequence": UnitAttr()})
 
 
 def main(m: int, n: int, k: int, filename: str | None = None):
