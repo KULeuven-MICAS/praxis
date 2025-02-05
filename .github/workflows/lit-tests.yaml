@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: recursive
     - uses: prefix-dev/setup-pixi@v0.8.1
       with:
         cache: true
