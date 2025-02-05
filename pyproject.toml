@@ -18,6 +18,7 @@ platforms = ["linux-64"]
 naxirzag = { path = "./", editable = true }
 snax-mlir = { path = "./snax-mlir", editable = true }
 zigzag-dse = { path = "./zigzag", editable = true }
+filecheck = ">=1.0.1,<2"
 
 [tool.pixi.dependencies]
 snax-cluster-prebuilt = "==0.2.8"
@@ -30,4 +31,5 @@ snakemake-minimal="*"
 pyright = ">=1.1.390,<2"
 vcd-to-csv = { version = ">=0.1.0,<0.2", channel = "kuleuven-micas" }
 pre-commit = ">=4.1.0,<5"
+lit = ">=19.1.7,<20"
 
