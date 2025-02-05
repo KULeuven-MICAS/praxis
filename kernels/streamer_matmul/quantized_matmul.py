@@ -64,7 +64,8 @@ def matmul(m=32, n=32, k=32):
     function = FuncOp.from_region("snax_main", [], res_types, func_body)
     return ModuleOp([function])
 
-def main(m : int , n: int , k: int, filename : str | None = None):
+
+def main(m: int, n: int, k: int, filename: str | None = None):
     # Get the name of the current Python script and replace its extension with .mlir
     if filename is None:
         script_name = os.path.basename(__file__)
