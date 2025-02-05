@@ -1,3 +1,7 @@
+# Naxirzag
+
+$\text{Naxirzag} = \text{SNAX} + \text{MLIR} + \text{ZigZag}$
+
 ## Get started:
 
 [Install pixi](https://pixi.sh), then:
