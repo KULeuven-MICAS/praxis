@@ -15,7 +15,7 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
     op_type_rewrite_pattern,
 )
-from xdsl.dialects.builtin import IntegerAttr, ModuleOp, NoneAttr, ShapedType, IntegerType, IntAttr, UnitAttr
+from xdsl.dialects.builtin import ContainerType, IntegerAttr, ModuleOp, NoneAttr, ShapedType, IntegerType, IntAttr, TensorType, UnitAttr
 from xdsl.dialects.transform import NamedSequenceOp, TileOp, SequenceOp, MatchOp, YieldOp, AnyOpType, OperationType
 from dataclasses import dataclass
 
@@ -94,9 +94,10 @@ def generate_zigzag_workload(generic_op: GenericOp):
 
         memref_shapes = []
         for op in operands:
-            assert isinstance(memref_type := op.type, MemRefType)
-            for shape in memref_type.shape.data:
-                memref_shapes.append(shape.data)
+            assert isinstance(memref_type := op.type, ShapedType)
+            memref_shapes.extend(memref_type.get_shape())
+            #for shape in memref_type.shape.data:
+            #    memref_shapes.append(shape.data)
 
         iteration_bounds = inverse_map.eval(memref_shapes, [])
 
@@ -111,7 +112,7 @@ def generate_zigzag_workload(generic_op: GenericOp):
         # extract operand precision
         widths = []
         for op in operands:
-            assert isinstance(memref_type := op.type, MemRefType)
+            assert isinstance(memref_type := op.type, ContainerType)
             element_type = memref_type.get_element_type()
             if isinstance(element_type, IntegerType):
                 widths.append(element_type.width.data)
