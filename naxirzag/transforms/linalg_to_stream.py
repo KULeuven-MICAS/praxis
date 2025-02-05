@@ -4,10 +4,9 @@ from typing import Any, cast
 from xdsl.dialects import builtin
 from xdsl.dialects.linalg import GenericOp
 from xdsl.context import MLContext
-from xdsl.ir import Attribute, Block, ErasedSSAValue, Region, SSAValue
+from xdsl.ir import Block, Region, SSAValue
 from xdsl.ir.affine import AffineDimExpr, AffineExpr, AffineMap
-from xdsl.irdl import Operation
-from xdsl.parser import DenseArrayBase, MemRefType
+from xdsl.parser import DenseArrayBase
 from xdsl.passes import ModulePass
 from xdsl.pattern_rewriter import (
     PatternRewriter,
@@ -15,8 +14,8 @@ from xdsl.pattern_rewriter import (
     RewritePattern,
     op_type_rewrite_pattern,
 )
-from xdsl.dialects.builtin import ContainerType, IntegerAttr, ModuleOp, NoneAttr, ShapedType, IntegerType, IntAttr, TensorType, UnitAttr
-from xdsl.dialects.transform import NamedSequenceOp, TileOp, SequenceOp, MatchOp, YieldOp, AnyOpType, OperationType
+from xdsl.dialects.builtin import ContainerType, IntegerAttr, ModuleOp, ShapedType, IntegerType
+from xdsl.dialects.transform import NamedSequenceOp, TileOp, MatchOp, YieldOp, AnyOpType, OperationType
 from dataclasses import dataclass
 
 from xdsl.rewriter import InsertPoint
@@ -82,7 +81,7 @@ def generate_zigzag_workload(generic_op: GenericOp):
         zigzag_description["dimension_relations"] = []
 
         # extract loop bounds by evaluating the inverse affine map
-        # with the memref shapes as input
+        # with the operand shapes as input
         results: list[AffineExpr] = []
         results.extend(indexing_maps[0].results)
         results.extend(indexing_maps[1].results)
@@ -92,14 +91,12 @@ def generate_zigzag_workload(generic_op: GenericOp):
         inverse_map = combined_affine_map.inverse_permutation()
         assert inverse_map is not None
 
-        memref_shapes = []
+        operand_shapes = []
         for op in operands:
-            assert isinstance(memref_type := op.type, ShapedType)
-            memref_shapes.extend(memref_type.get_shape())
-            #for shape in memref_type.shape.data:
-            #    memref_shapes.append(shape.data)
+            assert isinstance(operand_type := op.type, ShapedType)
+            operand_shapes.extend(operand_type.get_shape())
 
-        iteration_bounds = inverse_map.eval(memref_shapes, [])
+        iteration_bounds = inverse_map.eval(operand_shapes, [])
 
         zigzag_description["loop_dims"] = [f"D{i}" for i in range(len(iteration_bounds))]
         zigzag_description["loop_sizes"] = [x for x in iteration_bounds]
@@ -112,8 +109,8 @@ def generate_zigzag_workload(generic_op: GenericOp):
         # extract operand precision
         widths = []
         for op in operands:
-            assert isinstance(memref_type := op.type, ContainerType)
-            element_type = memref_type.get_element_type()
+            assert isinstance(operand_type := op.type, ContainerType)
+            element_type = operand_type.get_element_type()
             if isinstance(element_type, IntegerType):
                 widths.append(element_type.width.data)
             else:
