@@ -1,9 +1,8 @@
 {
   "include": [
-    "."
+    "naxirzag"
   ],
   "venvPath": ".",
-  "venv": ".venv",
   "extraPaths": [
     "./snax-mlir",
     "./zigzag"
