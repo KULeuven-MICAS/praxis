@@ -1,3 +1,5 @@
+from typing import IO
+from xdsl.dialects.builtin import ModuleOp
 from snaxc.tools.snax_opt_main import SNAXOptMain
 
 from naxirzag.transforms import get_all_passes
@@ -10,6 +12,16 @@ class NaxirzagMain(SNAXOptMain):
         # Aditionally, register all naxirzag passes
         for name, pass_ in get_all_passes().items():
             self.register_pass(name, pass_)
+
+    def register_all_targets(self):
+        super().register_all_targets()
+
+        def _output_zigzag(prog: ModuleOp, output: IO[str]):
+            from naxirzag.transforms.linalg_to_stream import print_total_cycles
+
+            print_total_cycles(prog, output)
+
+        self.available_targets["zigzag"] = _output_zigzag
 
 
 def main():

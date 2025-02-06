@@ -1,5 +1,5 @@
 import importlib.resources
-from typing import Any, cast
+from typing import Any, cast, IO
 
 from xdsl.dialects import builtin
 from xdsl.dialects.linalg import GenericOp
@@ -259,6 +259,40 @@ class LinalgToStreamTranslator(RewritePattern):
         rewriter.insert_op(
             list(reversed(all_tiling_ops)), InsertPoint.after(structured_match)
         )
+
+
+def print_total_cycles(module: ModuleOp, output: IO[str]) -> None:
+    for op in module.body.walk():
+        if isinstance(op, GenericOp):
+            generic_op = op
+            if len(generic_op.outputs) != 1:
+                return
+            if not isinstance(generic_op.outputs[0].type, ShapedType):
+                return
+
+            # generate zigzag workload
+            workload = generate_zigzag_workload(generic_op)
+
+            # run zigzag
+            with open("workload.yaml", "w") as f:
+                f.write(yaml.dump(workload, sort_keys=False))
+
+            hardware_path = (
+                importlib.resources.files("zigzag.inputs.hardware") / "gemm_l1_l3.yaml"
+            )
+            mapping_path = (
+                importlib.resources.files("zigzag.inputs.mapping") / "gemm_l1_l3.yaml"
+            )
+
+            returned_values = get_hardware_performance_zigzag(
+                "workload.yaml", str(hardware_path), str(mapping_path)
+            )
+
+            # The function can return 5 or 3 values, we want 3
+            assert len(returned_values) == 3
+            energy_total, latency_total, cmes = returned_values
+            cmes = cast(list[tuple[CostModelEvaluation, Any]], cmes[0][1])
+            print(int(latency_total), file=output)
 
 
 @dataclass(frozen=True)
