@@ -153,14 +153,19 @@ def naxirzag_zigzag_wrapper(
     """
     Simple wrapper for setting defaults in zigzag api
     """
+    # get zigzag default paths if none specified
     if hardware_path is None:
         hardware_path = str(
             importlib.resources.files("zigzag.inputs.hardware") / "gemm_l1_l3.yaml"
         )
+    else:
+        hardware_path = hardware_path
     if mapping_path is None:
         mapping_path = str(
             importlib.resources.files("zigzag.inputs.mapping") / "gemm_l1_l3.yaml"
         )
+    else:
+        mapping_path = mapping_path
 
     returned_values = get_hardware_performance_zigzag(
         workload_path, hardware_path, mapping_path
@@ -185,22 +190,8 @@ def print_total_cycles(module: ModuleOp, output: IO[str]) -> None:
             workload = generate_zigzag_workload(generic_op)
 
             # run zigzag
-            with open("workload.yaml", "w") as f:
+            filename = "workload.yaml"
+            with open(filename, "w") as f:
                 f.write(yaml.dump(workload, sort_keys=False))
-
-            hardware_path = (
-                importlib.resources.files("zigzag.inputs.hardware") / "gemm_l1_l3.yaml"
-            )
-            mapping_path = (
-                importlib.resources.files("zigzag.inputs.mapping") / "gemm_l1_l3.yaml"
-            )
-
-            returned_values = get_hardware_performance_zigzag(
-                "workload.yaml", str(hardware_path), str(mapping_path)
-            )
-
-            # The function can return 5 or 3 values, we want 3
-            assert len(returned_values) == 3
-            energy_total, latency_total, cmes = returned_values
-            cmes = cast(list[tuple[CostModelEvaluation, Any]], cmes[0][1])
+            _, latency_total, _ = naxirzag_zigzag_wrapper(workload_path=filename)
             print(int(latency_total), file=output)
