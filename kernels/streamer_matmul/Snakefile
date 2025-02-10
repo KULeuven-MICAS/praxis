@@ -56,8 +56,18 @@ values = [16, 32]
 # Rules
 rule all:
     input:
-        "tiled_quantized_matmul_traces.json",
-        "quantized_matmul_results.csv",
+        #"tiled_quantized_matmul_traces.json",
+        #"quantized_matmul_results.csv",
+        expand("{file}_{m}_{n}_{k}.cycles", file=files, m=values, n=values, k=values),
+
+
+rule get_zigzag_cycles:
+    input:
+        "{file}_{m}_{n}_{k}.mlir",
+    output:
+        "{file}_{m}_{n}_{k}.cycles",
+    shell:
+        "snax-opt -p preprocess {input[0]} | naxirzag-opt -p linalg-to-stream -t zigzag > {output[0]}"
 
 
 rule get_dataframe:
@@ -65,6 +75,7 @@ rule get_dataframe:
         expand(
             "{file}_{m}_{n}_{k}_traces.json", file=files, m=values, n=values, k=values
         ),
+        expand("{file}_{m}_{n}_{k}.cycles", file=files, m=values, n=values, k=values),
     output:
         "{file}_results.csv",
     run:

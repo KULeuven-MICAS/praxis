@@ -15,7 +15,19 @@ def aggregate_results(filename: str):
             with open(file, "r") as f:
                 json_data = json.load(f)
                 extracted_cycles = json_data[0][0][2]["cycles"]
-            data_list.append({"n": n, "m": m, "k": k, "cycles": extracted_cycles})
+            file.replace("_traces.json", ".cycles")
+            with open(file.replace("_traces.json", ".cycles"), "r") as f:
+                zigzag_cycles = int(f.readline())
+            breakpoint()
+            data_list.append(
+                {
+                    "n": n,
+                    "m": m,
+                    "k": k,
+                    "rtl cycles": extracted_cycles,
+                    "zz cycles": zigzag_cycles,
+                }
+            )
     df = pd.DataFrame(data_list)
     df.to_csv(f"{filename}_results.csv", index=False)
     return df
