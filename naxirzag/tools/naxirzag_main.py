@@ -1,4 +1,4 @@
-from compiler.tools.snax_opt_main import SNAXOptMain
+from snaxc.tools.snax_opt_main import SNAXOptMain
 
 from naxirzag.transforms import get_all_passes
 
