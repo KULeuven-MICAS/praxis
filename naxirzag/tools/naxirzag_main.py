@@ -17,7 +17,7 @@ class NaxirzagMain(SNAXOptMain):
         super().register_all_targets()
 
         def _output_zigzag(prog: ModuleOp, output: IO[str]):
-            from naxirzag.transforms.linalg_to_stream import print_total_cycles
+            from naxirzag.backend.zigzag import print_total_cycles
 
             print_total_cycles(prog, output)
 
