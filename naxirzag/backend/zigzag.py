@@ -1,14 +1,27 @@
 import importlib.resources
 from xdsl.dialects.transform import TileOp
-import yaml
-from typing import IO, Any, cast
+from typing import IO
 from xdsl.dialects.builtin import IntegerType, ModuleOp, ShapedType, ContainerType
 from xdsl.dialects.linalg import GenericOp
 from xdsl.ir.affine import AffineDimExpr, AffineExpr, AffineMap
 from xdsl.parser import DenseArrayBase
 from xdsl.ir import SSAValue
 
-from zigzag.api import get_hardware_performance_zigzag
+# zigzag imports
+import yaml
+from zigzag.stages.results.reduce_stages import MinimalLatencyStage, SumStage
+from zigzag.stages.results.save import PickleSaveStage
+from zigzag.stages.parser.workload_parser import WorkloadParserStage
+from zigzag.stages.workload_iterator import WorkloadStage
+from zigzag.stages.parser.accelerator_parser import AcceleratorParserStage
+from zigzag.stages.evaluation.cost_model_evaluation import CostModelStage
+from zigzag.stages.mapping.spatial_mapping_generation import (
+    SpatialMappingGeneratorStage,
+)
+from zigzag.stages.mapping.temporal_mapping_generator_stage import (
+    TemporalMappingGeneratorStage,
+)
+from zigzag.stages.main import MainStage
 from zigzag.cost_model.cost_model import CostModelEvaluation
 from zigzag.mapping.utils import get_temporal_loops, get_spatial_loops
 
@@ -149,10 +162,11 @@ def naxirzag_zigzag_wrapper(
     workload_path: str = "workload.yaml",
     hardware_path: str | None = None,
     mapping_path: str | None = None,
+    output_path: str | None = None,
+    lpf_limit: int = 6,
+    nb_spatial_mappings_generated: int = 3,
+    verbose: bool = False,
 ):
-    """
-    Simple wrapper for setting defaults in zigzag api
-    """
     # get zigzag default paths if none specified
     if hardware_path is None:
         hardware_path = str(
@@ -167,17 +181,71 @@ def naxirzag_zigzag_wrapper(
     else:
         mapping_path = mapping_path
 
-    returned_values = get_hardware_performance_zigzag(
-        workload_path, hardware_path, mapping_path
+    # Initialize the logger
+    if verbose:
+        import logging
+
+        logging_level = logging.INFO
+        logging_format = (
+            "%(asctime)s - %(funcName)s +%(lineno)s - %(levelname)s - %(message)s"
+        )
+        logging.basicConfig(level=logging_level, format=logging_format)
+
+    opt_stage = MinimalLatencyStage
+
+    stages = [
+        # Parse the ONNX Model into the workload
+        WorkloadParserStage,
+        # Parse the accelerator module/passthrough given accelerator
+        AcceleratorParserStage,
+        # Save all received CMEs in a list to a pickle file
+        PickleSaveStage,
+        # Sum up the received best CME across all layers of the workload
+        SumStage,
+        # Iterate through the different layers in the workload
+        WorkloadStage,
+        # Reduce all CMEs, returning minimal energy/latency one
+        opt_stage,
+        # Generate multiple spatial mappings (SM)
+        SpatialMappingGeneratorStage,
+        # Reduce all CMEs, returning minimal energy/latency one
+        opt_stage,
+        # Generate multiple temporal mappings (TM)
+        TemporalMappingGeneratorStage,
+        # Evaluate generated SM and TM through cost model
+        CostModelStage,
+    ]
+
+    # Initialize the MainStage as entry point
+    mainstage = MainStage(
+        list_of_callables=[s for s in stages],
+        accelerator=hardware_path,
+        workload=workload_path,
+        mapping=mapping_path,
+        pickle_filename=output_path,
+        loma_lpf_limit=lpf_limit,
+        loma_show_progress_bar=verbose,
+        nb_mappings_generated=nb_spatial_mappings_generated,
+        # If we need access the same input data multiple times
+        # from the innermost memory level and the data size is
+        # smaller than the memory read bw, # take into account only
+        # one-time access cost (assume the data can stay at
+        # the output pins of the memory as long as it is needed).
+        access_same_data_considered_as_no_access=True,
     )
-    # The function can return 5 or 3 values, we want 3
-    assert len(returned_values) == 3
-    energy_total, latency_total, cmes = returned_values
-    cmes = cast(list[tuple[CostModelEvaluation, Any]], cmes[0][1])
-    return (energy_total, latency_total, cmes)
+
+    # Launch the MainStage
+    cmes = mainstage.run()
+    # Get the results
+    energy_total: float = cmes[0][0].energy_total
+    latency_total: float = cmes[0][0].latency_total2
+
+    return energy_total, latency_total, cmes
 
 
-def print_total_cycles(module: ModuleOp, output: IO[str]) -> None:
+def print_total_cycles(
+    module: ModuleOp, output: IO[str], hardware_path: str, mapping_path: str
+) -> None:
     for op in module.body.walk():
         if isinstance(op, GenericOp):
             generic_op = op
