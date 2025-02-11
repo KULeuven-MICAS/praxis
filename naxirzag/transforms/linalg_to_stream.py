@@ -45,27 +45,15 @@ class LinalgToStreamTranslator(RewritePattern):
         if not isinstance(generic_op.outputs[0].type, ShapedType):
             return
 
-        # get zigzag default paths if none specified
-        if self.zigzag_hardware_path is None:
-            hardware_path = (
-                importlib.resources.files("zigzag.inputs.hardware") / "gemm_l1_l3.yaml"
-            )
-        else:
-            hardware_path = self.zigzag_hardware_path
-        if self.zigzag_mapping_path is None:
-            mapping_path = (
-                importlib.resources.files("zigzag.inputs.mapping") / "gemm_l1_l3.yaml"
-            )
-        else:
-            mapping_path = self.zigzag_mapping_path
-
         # generate zigzag workload
         workload = generate_zigzag_workload(generic_op)
         workload_path = "workload.yaml"
         with open(workload_path, "w") as f:
             f.write(yaml.dump(workload, sort_keys=False))
 
-        _, _, cmes = naxirzag_zigzag_wrapper(workload_path)
+        _, _, cmes = naxirzag_zigzag_wrapper(
+            workload_path, self.zigzag_hardware_path, self.zigzag_mapping_path
+        )
         # for now, the assumption is 1 layer, with the following id:
         id = 0
 
