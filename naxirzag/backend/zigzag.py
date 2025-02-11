@@ -1,4 +1,6 @@
 import importlib.resources
+import logging
+import pickle
 from xdsl.dialects.transform import TileOp
 from typing import IO
 from xdsl.dialects.builtin import IntegerType, ModuleOp, ShapedType, ContainerType
@@ -10,7 +12,6 @@ from xdsl.ir import SSAValue
 # zigzag imports
 import yaml
 from zigzag.stages.results.reduce_stages import MinimalLatencyStage, SumStage
-from zigzag.stages.results.save import PickleSaveStage
 from zigzag.stages.parser.workload_parser import WorkloadParserStage
 from zigzag.stages.workload_iterator import WorkloadStage
 from zigzag.stages.parser.accelerator_parser import AcceleratorParserStage
@@ -162,7 +163,6 @@ def naxirzag_zigzag_wrapper(
     workload_path: str = "workload.yaml",
     hardware_path: str | None = None,
     mapping_path: str | None = None,
-    output_path: str | None = None,
     lpf_limit: int = 6,
     nb_spatial_mappings_generated: int = 3,
     verbose: bool = False,
@@ -183,23 +183,21 @@ def naxirzag_zigzag_wrapper(
 
     # Initialize the logger
     if verbose:
-        import logging
-
         logging_level = logging.INFO
         logging_format = (
             "%(asctime)s - %(funcName)s +%(lineno)s - %(levelname)s - %(message)s"
         )
         logging.basicConfig(level=logging_level, format=logging_format)
+    else:
+        logging.disable(logging.CRITICAL)  # Disables all logs at CRITICAL and below
 
     opt_stage = MinimalLatencyStage
 
     stages = [
-        # Parse the ONNX Model into the workload
+        # Parse the workload
         WorkloadParserStage,
         # Parse the accelerator module/passthrough given accelerator
         AcceleratorParserStage,
-        # Save all received CMEs in a list to a pickle file
-        PickleSaveStage,
         # Sum up the received best CME across all layers of the workload
         SumStage,
         # Iterate through the different layers in the workload
@@ -222,7 +220,6 @@ def naxirzag_zigzag_wrapper(
         accelerator=hardware_path,
         workload=workload_path,
         mapping=mapping_path,
-        pickle_filename=output_path,
         loma_lpf_limit=lpf_limit,
         loma_show_progress_bar=verbose,
         nb_mappings_generated=nb_spatial_mappings_generated,
@@ -234,17 +231,18 @@ def naxirzag_zigzag_wrapper(
         access_same_data_considered_as_no_access=True,
     )
 
-    # Launch the MainStage
+    # Run zigzag and receive the cost model evaluations
     cmes = mainstage.run()
-    # Get the results
-    energy_total: float = cmes[0][0].energy_total
-    latency_total: float = cmes[0][0].latency_total2
 
-    return energy_total, latency_total, cmes
+    return cmes
 
 
-def print_total_cycles(
-    module: ModuleOp, output: IO[str], hardware_path: str, mapping_path: str
+def get_zigzag_cme(
+    module: ModuleOp,
+    output: IO,
+    hardware_path: str,
+    mapping_path: str,
+    verbose: bool = False,
 ) -> None:
     for op in module.body.walk():
         if isinstance(op, GenericOp):
@@ -253,13 +251,17 @@ def print_total_cycles(
                 return
             if not isinstance(generic_op.outputs[0].type, ShapedType):
                 return
-
             # generate zigzag workload
             workload = generate_zigzag_workload(generic_op)
-
             # run zigzag
             filename = "workload.yaml"
             with open(filename, "w") as f:
                 f.write(yaml.dump(workload, sort_keys=False))
-            _, latency_total, _ = naxirzag_zigzag_wrapper(workload_path=filename)
-            print(int(latency_total), file=output)
+
+            cmes = naxirzag_zigzag_wrapper(
+                workload_path=filename,
+                hardware_path=hardware_path,
+                mapping_path=mapping_path,
+                verbose=verbose,
+            )
+            pickle.dump(cmes, output, protocol=pickle.HIGHEST_PROTOCOL)
