@@ -6,11 +6,11 @@ from xdsl.passes import ModulePass
 def get_all_passes() -> dict[str, Callable[[], type[ModulePass]]]:
     """Returns all available passes."""
 
-    def get_linalg_to_stream():
-        from naxirzag.transforms import linalg_to_stream
+    def get_apply_zigzag_schedule():
+        from naxirzag.transforms import apply_zigzag_schedule
 
-        return linalg_to_stream.ApplyZigzagSchedule
+        return apply_zigzag_schedule.ApplyZigzagSchedule
 
     return {
-        "apply-zigzag-schedule": get_linalg_to_stream,
+        "apply-zigzag-schedule": get_apply_zigzag_schedule,
     }
