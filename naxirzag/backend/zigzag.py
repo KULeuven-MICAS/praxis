@@ -2,7 +2,7 @@ import importlib.resources
 import logging
 import pickle
 from xdsl.dialects.transform import TileOp
-from typing import IO
+from typing import IO, Any, cast
 from xdsl.dialects.builtin import IntegerType, ModuleOp, ShapedType, ContainerType
 from xdsl.dialects.linalg import GenericOp
 from xdsl.ir.affine import AffineDimExpr, AffineExpr, AffineMap
@@ -166,7 +166,7 @@ def naxirzag_zigzag_wrapper(
     lpf_limit: int = 6,
     nb_spatial_mappings_generated: int = 3,
     verbose: bool = False,
-):
+) -> list[tuple[CostModelEvaluation, Any]]:
     # get zigzag default paths if none specified
     if hardware_path is None:
         hardware_path = str(
@@ -233,6 +233,7 @@ def naxirzag_zigzag_wrapper(
 
     # Run zigzag and receive the cost model evaluations
     cmes = mainstage.run()
+    cmes = cast(list[tuple[CostModelEvaluation, Any]], cmes[0][1])
 
     return cmes
 

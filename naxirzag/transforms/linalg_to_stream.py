@@ -51,7 +51,7 @@ class LinalgToStreamTranslator(RewritePattern):
         with open(workload_path, "w") as f:
             f.write(yaml.dump(workload, sort_keys=False))
 
-        _, _, cmes = naxirzag_zigzag_wrapper(
+        cmes = naxirzag_zigzag_wrapper(
             workload_path, self.zigzag_hardware_path, self.zigzag_mapping_path
         )
         # for now, the assumption is 1 layer, with the following id:
