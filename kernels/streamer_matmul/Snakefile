@@ -1,6 +1,6 @@
 from util.snake.configs import get_snax_gemmx_config
 from quantized_matmul import main as get_quantized_matmul
-from aggregate import aggregate_results
+from aggregate import aggregate_results, plot_results
 
 config = get_snax_gemmx_config(snax_mlir_path="../../snax-mlir")
 config["snaxoptflags"] = ",".join(
@@ -57,29 +57,40 @@ values = [16, 32]
 rule all:
     input:
         #"tiled_quantized_matmul_traces.json",
-        #"quantized_matmul_results.csv",
-        expand("{file}_{m}_{n}_{k}.cycles", file=files, m=values, n=values, k=values),
+        "quantized_matmul_plot.html",
+        #expand("{file}_{m}_{n}_{k}_cmes.pickle", file=files, m=values, n=values, k=values),
 
 
-rule get_zigzag_cycles:
+rule get_zigzag_cme:
     input:
         "{file}_{m}_{n}_{k}.mlir",
     output:
-        "{file}_{m}_{n}_{k}.cycles",
+        "{file}_{m}_{n}_{k}_cmes.pickle",
     shell:
-        "snax-opt -p preprocess {input[0]} | naxirzag-opt -p linalg-to-stream -t zigzag > {output[0]}"
+        "naxirzag-opt -p preprocess {input[0]} -t zigzag -o {output[0]}"
 
 
 rule get_dataframe:
     input:
-        expand(
+        jsons=expand(
             "{file}_{m}_{n}_{k}_traces.json", file=files, m=values, n=values, k=values
         ),
-        expand("{file}_{m}_{n}_{k}.cycles", file=files, m=values, n=values, k=values),
+        pickles=expand(
+            "{file}_{m}_{n}_{k}_cmes.pickle", file=files, m=values, n=values, k=values
+        ),
     output:
-        "{file}_results.csv",
+        "{file}_results.hd5",
     run:
-        aggregate_results(wildcards.file)
+        aggregate_results(wildcards.file, input.jsons, input.pickles)
+
+
+rule plot_dataframe:
+    input:
+        "{file}_results.hd5",
+    output:
+        "{file}_plot.html",
+    run:
+        plot_results(wildcards.file)
 
 
 rule generate_quantized_matmul:
