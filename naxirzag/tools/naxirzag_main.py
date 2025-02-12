@@ -59,7 +59,10 @@ class NaxirzagMain(SNAXOptMain):
         else:
             return open(self.args.output_file, "w")
 
-    def output_resulting_program(self, prog: ModuleOp) -> str | bytes:
+    # TODO, update output_resulting_program upstream to allow for bytes as output
+    def output_resulting_program(  # pyright: ignore
+        self, prog: ModuleOp
+    ) -> str | bytes:
         """Get the resulting program.
         This version is adapted to, upon -t zigzag:
         - write to a binary stream
