@@ -1,3 +1,4 @@
+import pickle
 from xdsl.dialects import builtin
 from xdsl.dialects.linalg import GenericOp
 from xdsl.context import MLContext
@@ -12,7 +13,6 @@ from xdsl.pattern_rewriter import (
 from xdsl.dialects.builtin import (
     IntegerAttr,
     ModuleOp,
-    ShapedType,
 )
 from xdsl.dialects.transform import (
     NamedSequenceOp,
@@ -24,36 +24,22 @@ from xdsl.dialects.transform import (
 from dataclasses import dataclass
 
 from xdsl.rewriter import InsertPoint
-import yaml
 
 from naxirzag.backend.zigzag import (
-    generate_zigzag_workload,
-    naxirzag_zigzag_wrapper,
     process_cme,
 )
 
 
 @dataclass
-class LinalgToStreamTranslator(RewritePattern):
-    zigzag_hardware_path: str | None
-    zigzag_mapping_path: str | None
+class ApplyZigzagScheduleRewriter(RewritePattern):
+    zigzag_cme_path: str | None
 
     @op_type_rewrite_pattern
     def match_and_rewrite(self, generic_op: GenericOp, rewriter: PatternRewriter):
-        if len(generic_op.outputs) != 1:
-            return
-        if not isinstance(generic_op.outputs[0].type, ShapedType):
-            return
-
-        # generate zigzag workload
-        workload = generate_zigzag_workload(generic_op)
-        workload_path = "workload.yaml"
-        with open(workload_path, "w") as f:
-            f.write(yaml.dump(workload, sort_keys=False))
-
-        cmes = naxirzag_zigzag_wrapper(
-            workload_path, self.zigzag_hardware_path, self.zigzag_mapping_path
-        )
+        if self.zigzag_cme_path is None:
+            raise ValueError("Path to zigzag CME pickle file is mandatory.")
+        with open(self.zigzag_cme_path, "rb") as fp:
+            cmes = pickle.load(fp)
         # for now, the assumption is 1 layer, with the following id:
         id = 0
 
@@ -97,15 +83,12 @@ class LinalgToStreamTranslator(RewritePattern):
 
 
 @dataclass(frozen=True)
-class LinalgToStream(ModulePass):
-    name = "linalg-to-stream"
-    zz_hw: str | None
-    zz_map: str | None
+class ApplyZigzagSchedule(ModulePass):
+    name = "apply-zigzag-schedule"
+    zz_cme: str | None
 
     def apply(self, ctx: MLContext, op: builtin.ModuleOp) -> None:
         PatternRewriteWalker(
-            LinalgToStreamTranslator(
-                zigzag_hardware_path=self.zz_hw, zigzag_mapping_path=self.zz_map
-            ),
+            ApplyZigzagScheduleRewriter(zigzag_cme_path=self.zz_cme),
             apply_recursively=False,
         ).rewrite_module(op)
