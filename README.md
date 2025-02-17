@@ -1,13 +1,13 @@
-# Naxirzag
+# Praxis
 
-$\text{Naxirzag} = \text{SNAX} + \text{MLIR} + \text{ZigZag}$
+$\text{Praxis} = \text{SNAX} + \text{MLIR} + \text{ZigZag}$
 
 ## Get started:
 
 [Install pixi](https://pixi.sh), then:
 ```shell
-git clone --recursive git@github.com:KULeuven-MICAS/naxirzag.git
-cd naxirzag
+git clone --recursive git@github.com:KULeuven-MICAS/praxis.git
+cd praxis
 pixi shell
 ```
 Check if it works!:
