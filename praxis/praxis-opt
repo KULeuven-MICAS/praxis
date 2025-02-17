@@ -2,7 +2,7 @@
 
 import sys
 
-from tools.naxirzag_opt_main import main
+from tools.praxis_opt_main import main
 
 if __name__ == "__main__":
     sys.exit(main())
