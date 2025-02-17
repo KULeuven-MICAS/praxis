@@ -5,11 +5,11 @@ from io import StringIO, BytesIO
 from xdsl.dialects.builtin import ModuleOp
 from snaxc.tools.snax_opt_main import SNAXOptMain
 
-from naxirzag.transforms import get_all_passes
-from naxirzag.backend.zigzag import get_zigzag_cme
+from praxis.transforms import get_all_passes
+from praxis.backend.zigzag import get_zigzag_cme
 
 
-class NaxirzagMain(SNAXOptMain):
+class PraxisMain(SNAXOptMain):
     def register_all_arguments(self, arg_parser: argparse.ArgumentParser):
         """
         Registers all the command line arguments that are used by this tool.
@@ -41,7 +41,7 @@ class NaxirzagMain(SNAXOptMain):
     def register_all_passes(self):
         # Register all snax-opt passes (which includes all xdsl passes)
         super().register_all_passes()
-        # Aditionally, register all naxirzag passes
+        # Aditionally, register all praxis passes
         for name, pass_ in get_all_passes().items():
             self.register_pass(name, pass_)
 
@@ -94,8 +94,8 @@ class NaxirzagMain(SNAXOptMain):
 
 
 def main():
-    naxirzag_main = NaxirzagMain()
-    naxirzag_main.run()
+    praxis_main = PraxisMain()
+    praxis_main.run()
 
 
 if "__main__" == __name__:

@@ -25,7 +25,7 @@ from dataclasses import dataclass
 
 from xdsl.rewriter import InsertPoint
 
-from naxirzag.backend.zigzag import (
+from praxis.backend.zigzag import (
     process_cme,
 )
 

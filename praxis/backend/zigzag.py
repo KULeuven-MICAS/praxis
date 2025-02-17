@@ -159,7 +159,7 @@ def process_cme(cme: CostModelEvaluation, target: SSAValue):
     return all_tiling_ops
 
 
-def naxirzag_zigzag_wrapper(
+def praxis_zigzag_wrapper(
     workload_path: str = "workload.yaml",
     hardware_path: str | None = None,
     mapping_path: str | None = None,
@@ -259,7 +259,7 @@ def get_zigzag_cme(
             with open(filename, "w") as f:
                 f.write(yaml.dump(workload, sort_keys=False))
 
-            cmes = naxirzag_zigzag_wrapper(
+            cmes = praxis_zigzag_wrapper(
                 workload_path=filename,
                 hardware_path=hardware_path,
                 mapping_path=mapping_path,

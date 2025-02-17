@@ -67,7 +67,7 @@ rule get_zigzag_cme:
     output:
         "{file}_{m}_{n}_{k}_cmes.pickle",
     shell:
-        "naxirzag-opt -p preprocess {input[0]} -t zigzag -o {output[0]}"
+        "praxis-opt -p preprocess {input[0]} -t zigzag -o {output[0]}"
 
 
 rule get_dataframe:
