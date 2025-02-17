@@ -2287,12 +2287,6 @@ packages:
   - pkg:pypi/narwhals?source=compressed-mapping
   size: 173918
   timestamp: 1738858259693
-- pypi: ./
-  name: naxirzag
-  version: 0.0.1
-  sha256: f3d2792bc85caffc84c326ad44de056b080949243ba137579fc7d874ebee2db0
-  requires_python: '>=3.10'
-  editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/nbformat-5.10.4-pyhd8ed1ab_1.conda
   sha256: 7a5bd30a2e7ddd7b85031a5e2e14f290898098dc85bea5b3a5bf147c25122838
   md5: bbe1963f1e47f594070ffe87cdf612ea
@@ -2632,6 +2626,12 @@ packages:
   - pkg:pypi/plotly?source=hash-mapping
   size: 5034538
   timestamp: 1738287950837
+- pypi: ./
+  name: praxis
+  version: 0.0.1
+  sha256: d650fd66b7ebba910c5738793c9ce5ac3226bed7d76e541600bf4dd85a022a93
+  requires_python: '>=3.10'
+  editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/pre-commit-4.1.0-pyha770c72_0.conda
   sha256: b260b4b47956b654232f698be1b757935268830a808040aff2006d08953e9e32
   md5: 5353f5eb201a9415b12385e35ed1148d

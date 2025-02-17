@@ -1,4 +1,4 @@
-// RUN: naxirzag-opt -p preprocess -t zigzag -o test_cme.pickle %s && naxirzag-opt -p preprocess,apply-zigzag-schedule{zz_cme=\"test_cme.pickle\"} %s | filecheck %s
+// RUN: praxis-opt -p preprocess -t zigzag -o test_cme.pickle %s && praxis-opt -p preprocess,apply-zigzag-schedule{zz_cme=\"test_cme.pickle\"} %s | filecheck %s
 module {
   func.func @snax_main() -> (tensor<16x16xi32>, tensor<16x16xi32>) {
     %cst = arith.constant dense<0> : tensor<16x16xi8>
