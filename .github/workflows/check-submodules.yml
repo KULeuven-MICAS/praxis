@@ -1,0 +1,73 @@
+name: Verify Submodule Branches
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  verify-submodules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+
+      - name: Verify submodule branches
+        run: |
+          # Initialize output variables
+          invalid_submodules=""
+          all_valid=true
+          
+          # Function to check if a branch name is main or master
+          is_main_or_master() {
+            local branch_name="$1"
+            if [[ "$branch_name" == "main" || "$branch_name" == "master" ]]; then
+              return 0  # true in bash
+            else
+              return 1  # false in bash
+            fi
+          }
+          
+          # Get list of submodules
+          submodules=$(git config --file .gitmodules --get-regexp path | awk '{ print $2 }')
+          
+          # Check each submodule
+          for submodule in $submodules; do
+            echo "Checking submodule: $submodule"
+            
+            # Enter submodule directory
+            cd "$submodule" || { echo "Failed to enter $submodule directory"; exit 1; }
+            
+            # Get current branch of submodule
+            current_branch=$(git rev-parse --abbrev-ref HEAD)
+            echo "  Current branch: $current_branch"
+            
+            # Check if branch is main or master
+            if ! is_main_or_master "$current_branch"; then
+              echo "::warning::Submodule $submodule is on branch $current_branch, not main or master"
+              invalid_submodules="$invalid_submodules\n- $submodule (on branch: $current_branch)"
+              all_valid=false
+            fi
+            
+            # Return to main repo directory
+            cd - > /dev/null
+          done
+          
+          # Output results
+          if [ "$all_valid" = true ]; then
+            echo "All submodules are on main or master branches."
+          else
+            echo "The following submodules are NOT on main or master:"
+            echo -e "$invalid_submodules"
+            exit 1  # Fail the workflow if any submodules are not on main/master
+          fi
