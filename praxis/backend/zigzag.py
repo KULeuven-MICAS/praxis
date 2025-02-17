@@ -10,7 +10,6 @@ from xdsl.parser import DenseArrayBase
 from xdsl.ir import SSAValue
 
 # zigzag imports
-import yaml
 from zigzag.stages.results.reduce_stages import MinimalLatencyStage, SumStage
 from zigzag.stages.parser.workload_parser import WorkloadParserStage
 from zigzag.stages.workload_iterator import WorkloadStage
@@ -161,7 +160,7 @@ def process_cme(cme: CostModelEvaluation, target: SSAValue):
 
 
 def praxis_zigzag_wrapper(
-    workload_path: list[dict[str,Any]],
+    workload_path: list[dict[str, Any]],
     hardware_path: str | None = None,
     mapping_path: str | None = None,
     lpf_limit: int = 6,
