@@ -1,10 +1,11 @@
-name: Verify Submodule Branches
+name: Verify Submodule Commits
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  # Allow manual triggering
   workflow_dispatch:
 
 jobs:
@@ -17,26 +18,11 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Set up Git
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
-
-      - name: Verify submodule branches
+      - name: Verify submodule commits
         run: |
           # Initialize output variables
           invalid_submodules=""
           all_valid=true
-          
-          # Function to check if a branch name is main or master
-          is_main_or_master() {
-            local branch_name="$1"
-            if [[ "$branch_name" == "main" || "$branch_name" == "master" ]]; then
-              return 0  # true in bash
-            else
-              return 1  # false in bash
-            fi
-          }
           
           # Get list of submodules
           submodules=$(git config --file .gitmodules --get-regexp path | awk '{ print $2 }')
@@ -48,15 +34,48 @@ jobs:
             # Enter submodule directory
             cd "$submodule" || { echo "Failed to enter $submodule directory"; exit 1; }
             
-            # Get current branch of submodule
-            current_branch=$(git rev-parse --abbrev-ref HEAD)
-            echo "  Current branch: $current_branch"
+            # Get current commit of submodule
+            current_commit=$(git rev-parse HEAD)
+            echo "  Current commit: $current_commit"
             
-            # Check if branch is main or master
-            if ! is_main_or_master "$current_branch"; then
-              echo "::warning::Submodule $submodule is on branch $current_branch, not main or master"
-              invalid_submodules="$invalid_submodules\n- $submodule (on branch: $current_branch)"
+            # Fetch all branches to ensure we have the latest data
+            git fetch --all
+            
+            # Check if main branch exists, if not try master
+            if git show-ref --verify --quiet refs/remotes/origin/main; then
+              target_branch="origin/main"
+            elif git show-ref --verify --quiet refs/remotes/origin/master; then
+              target_branch="origin/master"
+            else
+              echo "::error::Neither main nor master branch found in submodule $submodule"
+              invalid_submodules="$invalid_submodules\n- $submodule (no main/master branch found)"
               all_valid=false
+              cd - > /dev/null
+              continue
+            fi
+            
+            # Get commit of target branch (main or master)
+            target_commit=$(git rev-parse $target_branch)
+            echo "  $target_branch commit: $target_commit"
+            
+            # Check if current commit is on the target branch
+            if git merge-base --is-ancestor $current_commit $target_branch && git merge-base --is-ancestor $target_branch $current_commit; then
+              echo "  Submodule $submodule is at the tip of $target_branch"
+            elif git merge-base --is-ancestor $current_commit $target_branch; then
+              echo "  Submodule $submodule is behind $target_branch but on the branch"
+              echo "::warning::Submodule $submodule is behind on $target_branch"
+              invalid_submodules="$invalid_submodules\n- $submodule (behind on $target_branch)"
+              all_valid=false
+            else
+              # Check if the commit is in the history of target branch
+              if git merge-base --is-ancestor $current_commit $target_branch; then
+                echo "  Submodule $submodule commit is in the history of $target_branch"
+              else
+                echo "  Submodule $submodule commit is not on $target_branch"
+                echo "::error::Submodule $submodule is not on $target_branch"
+                invalid_submodules="$invalid_submodules\n- $submodule (not on $target_branch)"
+                all_valid=false
+              fi
             fi
             
             # Return to main repo directory
@@ -65,9 +84,9 @@ jobs:
           
           # Output results
           if [ "$all_valid" = true ]; then
-            echo "All submodules are on main or master branches."
+            echo "All submodules are using commits from main or master branches."
           else
-            echo "The following submodules are NOT on main or master:"
+            echo "The following submodules have issues:"
             echo -e "$invalid_submodules"
-            exit 1  # Fail the workflow if any submodules are not on main/master
+            exit 1  # Fail the workflow
           fi
