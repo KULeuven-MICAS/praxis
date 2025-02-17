@@ -1,13 +1,13 @@
 [project]
-name = "naxirzag"
-description = "naxirzag"
+name = "praxis"
+description = "praxis"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT License" }
 version = "0.0.1"
 
 [project.scripts]
-naxirzag-opt = "naxirzag.tools.naxirzag_main:main"
+praxis-opt = "praxis.tools.praxis_main:main"
 
 [tool.pixi.project]
 authors = ["Josse Van Delm <josse.vandelm@gmail.com>"]
@@ -15,7 +15,7 @@ channels = ["conda-forge", "kuleuven-micas", "bioconda"]
 platforms = ["linux-64"]
 
 [tool.pixi.pypi-dependencies]
-naxirzag = { path = "./", editable = true }
+praxis = { path = "./", editable = true }
 snax-mlir = { path = "./snax-mlir", editable = true }
 zigzag-dse = { path = "./zigzag", editable = true }
 filecheck = ">=1.0.1,<2"

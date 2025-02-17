@@ -1,6 +1,6 @@
 {
   "include": [
-    "naxirzag"
+    "praxis"
   ],
   "venvPath": ".",
   "extraPaths": [
