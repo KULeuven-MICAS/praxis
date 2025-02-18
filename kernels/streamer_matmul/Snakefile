@@ -137,25 +137,38 @@ rule link_snax_binary:
         "{config[ld]} {config[ldflags]} {input} -o {output}"
 
 
-rule prep_hardware:
+rule hardware_prep:
     input:
         "{hw_config}.hjson",
     output:
-        directory=directory("hw_{hw_config}_build"),
         marker="hw_{hw_config}_build/prep.done"
+    params:
+        directory= lambda wildcards: f"hw_{wildcards.hw_config}_build"
     shell:
-        "mkdir -p {output.directory} && cp -R ../../snax_cluster/ {output.directory}/ && touch {output.marker}"
+        "mkdir -p {params.directory} && cp -R ../../snax_cluster/ {params.directory}/ && touch {output.marker}"
 
 
-rule build_hardware:
+rule hardware_generate:
     input:
         "{hw_config}.hjson",
         "hw_{hw_config}_build/prep.done"
     params:
         hw_config_path= lambda wildcards: Path(wildcards.hw_config).resolve()
     output:
-        "hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt"
+        marker="hw_{hw_config}_build/generate.done"
     run:
-        #shell("make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster rtl-gen ")
-        #shell("make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster sw -j{threads}")
-        shell("OBJCACHE=ccache make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j8 NPROC=8")
+        shell("make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster rtl-gen ")
+        shell("make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster sw -j{threads}")
+        shell("touch {output.marker}")
+
+
+rule hardware_build:
+    input:
+        "{hw_config}.hjson",
+        "hw_{hw_config}_build/generate.done"
+    params:
+        hw_config_path= lambda wildcards: Path(wildcards.hw_config).resolve()
+    output:
+        "hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt",
+    shell:
+        "OBJCACHE=ccache make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads}"
