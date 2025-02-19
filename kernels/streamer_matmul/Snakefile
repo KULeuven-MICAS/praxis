@@ -3,6 +3,7 @@ from util.snake.flags import get_cc_flags, get_ld_flags
 from quantized_matmul import main as get_quantized_matmul
 from aggregate import aggregate_results, plot_results
 from pathlib import Path
+from shutil import which
 
 config = get_snax_gemmx_config(snax_mlir_path="../../snax-mlir")
 
@@ -231,9 +232,10 @@ rule hardware_build:
         "hw_{hw_config}_build/generate_rtl.done",
     params:
         hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
+        ccache=lambda _: "OBJCACHE=ccache " if which("ccache") is not None else ""
     output:
         "hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt",
     threads: workflow.cores
     shell:
-        "OBJCACHE=ccache make CFG_OVERRIDE={params.hw_config_path}.hjson "
+        "{params.ccache}make CFG_OVERRIDE={params.hw_config_path}.hjson "
         "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads}"
