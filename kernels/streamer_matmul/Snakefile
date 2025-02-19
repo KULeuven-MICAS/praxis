@@ -70,6 +70,7 @@ rule compile_c:
     input:
         "main.c",
         "{hw_config}.hjson",
+        "hw_{hw_config}_build/compile_runtime.done",
     output:
         temp("main_{hw_config}.o"),
     params:
@@ -194,31 +195,47 @@ rule hardware_prep:
         "mkdir -p {params.directory} && cp -R ../../snax_cluster/ {params.directory}/ && touch {output.marker}"
 
 
-rule hardware_generate:
+rule hardware_generate_rtl:
     input:
         "{hw_config}.hjson",
         "hw_{hw_config}_build/prep.done",
     params:
         hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
     output:
-        marker="hw_{hw_config}_build/generate.done",
-    run:
-        shell(
-            "make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster rtl-gen "
-        )
-        shell(
-            "make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster sw -j{threads}"
-        )
-        shell("touch {output.marker}")
+        marker="hw_{hw_config}_build/generate_rtl.done",
+    shell:
+       "make CFG_OVERRIDE={params.hw_config_path}.hjson "
+       "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster rtl-gen && "
+       "touch {output.marker}"
+
+
+rule hardware_compile_runtime:
+    input:
+        "{hw_config}.hjson",
+        "hw_{hw_config}_build/generate_rtl.done",
+    params:
+        hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
+    output:
+        marker="hw_{hw_config}_build/compile_runtime.done",
+    threads:
+        workflow.cores
+    shell:
+        "make CFG_OVERRIDE={params.hw_config_path}.hjson "
+        "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster sw -j{threads} && "
+        "touch {output.marker}"
 
 
 rule hardware_build:
     input:
         "{hw_config}.hjson",
-        "hw_{hw_config}_build/generate.done",
+        "hw_{hw_config}_build/generate_rtl.done",
     params:
         hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
     output:
         "hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt",
+    threads:
+        workflow.cores
     shell:
-        "OBJCACHE=ccache make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads}"
+        "OBJCACHE=ccache make CFG_OVERRIDE={params.hw_config_path}.hjson "
+        "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads} && "
+        "touch {output.marker}"
