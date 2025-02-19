@@ -39,6 +39,9 @@ config["mlirtransformflags"] = [
     "--pass-pipeline='builtin.module(transform-interpreter{debug-bind-trailing-args=linalg.quantized_matmul}, test-transform-dialect-erase-schedule)'"
 ]
 
+config["num_chips"] = 1
+config["num_harts"] = 3
+
 
 module snax_rules:
     snakefile:
@@ -52,7 +55,7 @@ use rule * from snax_rules exclude simulate, compile_c as snax_*
 
 files = ["quantized_matmul"]
 
-values = [16]
+values = [16, 32]
 
 configs = ["cfg1", "cfg2"]
 
@@ -61,19 +64,19 @@ configs = ["cfg1", "cfg2"]
 rule all:
     input:
         #"tiled_quantized_matmul_traces.json",
-        #"quantized_matmul_plot.html",
+        "quantized_matmul_plot.html",
         #expand("{file}_{m}_{n}_{k}_cmes.pickle", file=files, m=values, n=values, k=values),
         #expand("hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt", hw_config=["cfg1", "cfg2"])
-        expand(
-            "{file}_{m}_{n}_{k}_{hw_config}_trace_chip_{num_chips:02d}_hart_{num_harts:05d}.dasm",
-            file=files,
-            hw_config=configs,
-            num_chips=range(config["num_chips"]),
-            num_harts=range(config["num_harts"]),
-            n=values,
-            m=values,
-            k=values,
-        ),
+        #expand(
+        #    "{file}_{m}_{n}_{k}_{hw_config}_trace_chip_{num_chips:02d}_hart_{num_harts:05d}.dasm",
+        #    file=files,
+        #    hw_config=configs,
+        #    num_chips=range(config["num_chips"]),
+        #    num_harts=range(config["num_harts"]),
+        #    n=values,
+        #    m=values,
+        #    k=values,
+        #),
 
 
 rule compile_c:
@@ -120,7 +123,7 @@ rule get_zigzag_cme:
 rule get_dataframe:
     input:
         jsons=expand(
-            "{file}_{m}_{n}_{k}_traces.json", file=files, m=values, n=values, k=values
+            "{file}_{m}_{n}_{k}_{hw_config}_traces.json", file=files, m=values, n=values, k=values, hw_config=configs
         ),
         pickles=expand(
             "{file}_{m}_{n}_{k}_cmes.pickle", file=files, m=values, n=values, k=values
