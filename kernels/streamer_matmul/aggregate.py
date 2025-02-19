@@ -3,6 +3,7 @@ import pandas as pd
 import pickle
 import os
 import plotly.express as px
+import sys
 
 
 def relevant_pairs_iterator(filename, input_jsons: list[str]):
@@ -44,7 +45,7 @@ def aggregate_results(filename, input_jsons: list[str], input_cmes: list[str]):
         )
 
     df = pd.DataFrame(data_list)
-    print(df)
+    print(df, file=sys.stderr)
     df.to_hdf(f"{filename}_results.hd5", key="results")
 
 
