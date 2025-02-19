@@ -237,5 +237,4 @@ rule hardware_build:
         workflow.cores
     shell:
         "OBJCACHE=ccache make CFG_OVERRIDE={params.hw_config_path}.hjson "
-        "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads} && "
-        "touch {output.marker}"
+        "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads}"
