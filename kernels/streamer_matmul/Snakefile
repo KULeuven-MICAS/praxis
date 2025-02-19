@@ -1,4 +1,5 @@
 from util.snake.configs import get_snax_gemmx_config
+from util.snake.flags import get_cc_flags, get_ld_flags
 from quantized_matmul import main as get_quantized_matmul
 from aggregate import aggregate_results, plot_results
 from pathlib import Path
@@ -19,7 +20,7 @@ config["snaxoptflags"] = ",".join(
         "set-memory-layout",
         "realize-memref-casts",
         "insert-sync-barrier",
-        "dispatch-regions{nb_cores=2}",
+        "dispatch-regions{nb_cores=3}",
         "dart-layout-resolution",
         "convert-dart-to-snax-stream",
         "convert-linalg-to-accfg",
@@ -46,12 +47,14 @@ module snax_rules:
         config
 
 
-use rule * from snax_rules as snax_*
+use rule * from snax_rules exclude simulate, compile_c as snax_* 
 
 
 files = ["quantized_matmul"]
 
-values = [16, 32]
+values = [16]
+
+configs = ["cfg1", "cfg2"]
 
 
 # Rules
@@ -60,7 +63,49 @@ rule all:
         #"tiled_quantized_matmul_traces.json",
         #"quantized_matmul_plot.html",
         #expand("{file}_{m}_{n}_{k}_cmes.pickle", file=files, m=values, n=values, k=values),
-        expand("hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt", hw_config=["cfg1", "cfg2"])
+        #expand("hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt", hw_config=["cfg1", "cfg2"])
+        expand(
+            "{file}_{m}_{n}_{k}_{hw_config}_trace_chip_{num_chips:02d}_hart_{num_harts:05d}.dasm",
+            file=files,
+            hw_config=configs,
+            num_chips=range(config["num_chips"]),
+            num_harts=range(config["num_harts"]),
+            n=values,
+            m=values,
+            k=values,
+        ),
+
+
+rule compile_c:
+    input:
+        "main.c",
+        "{hw_config}.hjson"
+    output:
+        temp("main_{hw_config}.o"),
+    params:
+        cc_flags = lambda wildcards: get_cc_flags(f"hw_{wildcards.hw_config}_build/snax_cluster", "../../snax-mlir")
+    shell:
+        "{config[cc]} {params.cc_flags} -c {input} -o {output}"
+
+
+rule simulate:
+    input:
+        binary="{file}_{hw_config}.x",
+        simulator="hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt",
+    output:
+        temp(
+            expand(
+                "{file}_{hw_config}_trace_chip_{num_chips:02d}_hart_{num_harts:05d}.dasm",
+                file=["{file}"],
+                hw_config=["{hw_config}"],
+                num_chips=range(config["num_chips"]),
+                num_harts=range(config["num_harts"]),
+            ),
+        ),
+    log:
+        "{file}_{hw_config}.vltlog",
+    shell:
+        "{input.simulator} --prefix-trace={wildcards.file}_{wildcards.hw_config}_ {input.binary}  2>&1 | tee {log}"
 
 
 rule get_zigzag_cme:
@@ -130,11 +175,13 @@ rule apply_transforms_mlir:
 rule link_snax_binary:
     input:
         "{file}.o",
-        "main.o",
+        "main_{hw_config}.o",
     output:
-        "{file}.x",
+        "{file}_{hw_config}.x",
+    params:
+        ld_flags = lambda wildcards: get_ld_flags(f"hw_{wildcards.hw_config}_build/snax_cluster")
     shell:
-        "{config[ld]} {config[ldflags]} {input} -o {output}"
+        "{config[ld]} {params.ld_flags} {input} -o {output}"
 
 
 rule hardware_prep:
