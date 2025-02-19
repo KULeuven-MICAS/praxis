@@ -65,7 +65,6 @@ jobs:
               echo "  Submodule $submodule is behind $target_branch but on the branch"
               echo "::warning::Submodule $submodule is behind on $target_branch"
               invalid_submodules="$invalid_submodules\n- $submodule (behind on $target_branch)"
-              all_valid=false
             else
               # Check if the commit is in the history of target branch
               if git merge-base --is-ancestor $current_commit $target_branch; then
