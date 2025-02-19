@@ -25,7 +25,7 @@ config["snaxoptflags"] = ",".join(
         "set-memory-layout",
         "realize-memref-casts",
         "insert-sync-barrier",
-        f"dispatch-regions{{nb_cores={config["num_harts"]}}}",
+        f"dispatch-regions{{nb_cores={config['num_harts']}}}",
         "dart-layout-resolution",
         "convert-dart-to-snax-stream",
         "convert-linalg-to-accfg",
