@@ -5,6 +5,10 @@ from aggregate import aggregate_results, plot_results
 from pathlib import Path
 
 config = get_snax_gemmx_config(snax_mlir_path="../../snax-mlir")
+
+config["num_chips"] = 1
+config["num_harts"] = 3
+
 config["snaxoptflags"] = ",".join(
     [
         "preprocess",
@@ -20,7 +24,7 @@ config["snaxoptflags"] = ",".join(
         "set-memory-layout",
         "realize-memref-casts",
         "insert-sync-barrier",
-        "dispatch-regions{nb_cores=3}",
+        f"dispatch-regions{{nb_cores={config["num_harts"]}}}",
         "dart-layout-resolution",
         "convert-dart-to-snax-stream",
         "convert-linalg-to-accfg",
@@ -38,9 +42,6 @@ config["snaxoptflags"] = ",".join(
 config["mlirtransformflags"] = [
     "--pass-pipeline='builtin.module(transform-interpreter{debug-bind-trailing-args=linalg.quantized_matmul}, test-transform-dialect-erase-schedule)'"
 ]
-
-config["num_chips"] = 1
-config["num_harts"] = 3
 
 
 module snax_rules:
