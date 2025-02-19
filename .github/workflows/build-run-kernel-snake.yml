@@ -17,6 +17,19 @@ jobs:
         with:
           cache: true
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      - name: Install CIRCT
+        uses: circt/install-circt@v1.1.1
+        with:
+          # The version of CIRCT to install.  This must match a release of CIRCT,
+          # e.g., 'firtool-1.56.1' or one of the following special strings:
+          #   - 'nightly' installs the latest nightly
+          #   - 'version-file' installs the release specified by a JSON file whose
+          #     location is set by the 'version-file' input.  This is done to
+          #     facilitate Continuous Delivery (CD) flows because GitHub Actions are
+          #     not allowed to modify anything in the '.github/' directory.
+          #
+          # Default: 'version-file'
+          version: 'firtool-1.62.0'
       - name: Get snax_cluster submodule commit hash
         id: get-submodule-commit
         run: |
