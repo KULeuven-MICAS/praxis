@@ -10,7 +10,6 @@ from xdsl.parser import DenseArrayBase
 from xdsl.ir import SSAValue
 
 # zigzag imports
-import yaml
 from zigzag.stages.results.reduce_stages import MinimalLatencyStage, SumStage
 from zigzag.stages.parser.workload_parser import WorkloadParserStage
 from zigzag.stages.workload_iterator import WorkloadStage
@@ -25,6 +24,7 @@ from zigzag.stages.mapping.temporal_mapping_generator_stage import (
 from zigzag.stages.main import MainStage
 from zigzag.cost_model.cost_model import CostModelEvaluation
 from zigzag.mapping.utils import get_temporal_loops, get_spatial_loops
+from zigzag.mapping.temporal_mapping import TemporalMappingType
 
 
 def generate_zigzag_workload(generic_op: GenericOp):
@@ -160,7 +160,7 @@ def process_cme(cme: CostModelEvaluation, target: SSAValue):
 
 
 def praxis_zigzag_wrapper(
-    workload_path: str = "workload.yaml",
+    workload_path: list[dict[str, Any]],
     hardware_path: str | None = None,
     mapping_path: str | None = None,
     lpf_limit: int = 6,
@@ -223,6 +223,7 @@ def praxis_zigzag_wrapper(
         loma_lpf_limit=lpf_limit,
         loma_show_progress_bar=verbose,
         nb_mappings_generated=nb_spatial_mappings_generated,
+        temporal_mapping_type=TemporalMappingType("even"),
         # If we need access the same input data multiple times
         # from the innermost memory level and the data size is
         # smaller than the memory read bw, # take into account only
@@ -254,13 +255,8 @@ def get_zigzag_cme(
                 return
             # generate zigzag workload
             workload = generate_zigzag_workload(generic_op)
-            # run zigzag
-            filename = "workload.yaml"
-            with open(filename, "w") as f:
-                f.write(yaml.dump(workload, sort_keys=False))
-
             cmes = praxis_zigzag_wrapper(
-                workload_path=filename,
+                workload_path=workload,
                 hardware_path=hardware_path,
                 mapping_path=mapping_path,
                 verbose=verbose,
