@@ -204,9 +204,9 @@ rule hardware_generate_rtl:
     output:
         marker="hw_{hw_config}_build/generate_rtl.done",
     shell:
-       "make CFG_OVERRIDE={params.hw_config_path}.hjson "
-       "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster rtl-gen && "
-       "touch {output.marker}"
+        "make CFG_OVERRIDE={params.hw_config_path}.hjson "
+        "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster rtl-gen && "
+        "touch {output.marker}"
 
 
 rule hardware_compile_runtime:
@@ -217,8 +217,7 @@ rule hardware_compile_runtime:
         hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
     output:
         marker="hw_{hw_config}_build/compile_runtime.done",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         "make CFG_OVERRIDE={params.hw_config_path}.hjson "
         "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster sw -j{threads} && "
@@ -233,8 +232,7 @@ rule hardware_build:
         hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
     output:
         "hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         "OBJCACHE=ccache make CFG_OVERRIDE={params.hw_config_path}.hjson "
         "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads}"
