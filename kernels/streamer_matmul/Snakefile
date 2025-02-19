@@ -50,7 +50,7 @@ module snax_rules:
         config
 
 
-use rule * from snax_rules exclude simulate, compile_c as snax_* 
+use rule * from snax_rules exclude simulate, compile_c as snax_*
 
 
 files = ["quantized_matmul"]
@@ -63,30 +63,19 @@ configs = ["cfg1", "cfg2"]
 # Rules
 rule all:
     input:
-        #"tiled_quantized_matmul_traces.json",
         "quantized_matmul_plot.html",
-        #expand("{file}_{m}_{n}_{k}_cmes.pickle", file=files, m=values, n=values, k=values),
-        #expand("hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt", hw_config=["cfg1", "cfg2"])
-        #expand(
-        #    "{file}_{m}_{n}_{k}_{hw_config}_trace_chip_{num_chips:02d}_hart_{num_harts:05d}.dasm",
-        #    file=files,
-        #    hw_config=configs,
-        #    num_chips=range(config["num_chips"]),
-        #    num_harts=range(config["num_harts"]),
-        #    n=values,
-        #    m=values,
-        #    k=values,
-        #),
 
 
 rule compile_c:
     input:
         "main.c",
-        "{hw_config}.hjson"
+        "{hw_config}.hjson",
     output:
         temp("main_{hw_config}.o"),
     params:
-        cc_flags = lambda wildcards: get_cc_flags(f"hw_{wildcards.hw_config}_build/snax_cluster", "../../snax-mlir")
+        cc_flags=lambda wildcards: get_cc_flags(
+            f"hw_{wildcards.hw_config}_build/snax_cluster", "../../snax-mlir"
+        ),
     shell:
         "{config[cc]} {params.cc_flags} -c {input} -o {output}"
 
@@ -123,7 +112,12 @@ rule get_zigzag_cme:
 rule get_dataframe:
     input:
         jsons=expand(
-            "{file}_{m}_{n}_{k}_{hw_config}_traces.json", file=files, m=values, n=values, k=values, hw_config=configs
+            "{file}_{m}_{n}_{k}_{hw_config}_traces.json",
+            file=files,
+            m=values,
+            n=values,
+            k=values,
+            hw_config=configs,
         ),
         pickles=expand(
             "{file}_{m}_{n}_{k}_cmes.pickle", file=files, m=values, n=values, k=values
@@ -182,7 +176,9 @@ rule link_snax_binary:
     output:
         "{file}_{hw_config}.x",
     params:
-        ld_flags = lambda wildcards: get_ld_flags(f"hw_{wildcards.hw_config}_build/snax_cluster")
+        ld_flags=lambda wildcards: get_ld_flags(
+            f"hw_{wildcards.hw_config}_build/snax_cluster"
+        ),
     shell:
         "{config[ld]} {params.ld_flags} {input} -o {output}"
 
@@ -191,9 +187,9 @@ rule hardware_prep:
     input:
         "{hw_config}.hjson",
     output:
-        marker="hw_{hw_config}_build/prep.done"
+        marker="hw_{hw_config}_build/prep.done",
     params:
-        directory= lambda wildcards: f"hw_{wildcards.hw_config}_build"
+        directory=lambda wildcards: f"hw_{wildcards.hw_config}_build",
     shell:
         "mkdir -p {params.directory} && cp -R ../../snax_cluster/ {params.directory}/ && touch {output.marker}"
 
@@ -201,23 +197,27 @@ rule hardware_prep:
 rule hardware_generate:
     input:
         "{hw_config}.hjson",
-        "hw_{hw_config}_build/prep.done"
+        "hw_{hw_config}_build/prep.done",
     params:
-        hw_config_path= lambda wildcards: Path(wildcards.hw_config).resolve()
+        hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
     output:
-        marker="hw_{hw_config}_build/generate.done"
+        marker="hw_{hw_config}_build/generate.done",
     run:
-        shell("make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster rtl-gen ")
-        shell("make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster sw -j{threads}")
+        shell(
+            "make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster rtl-gen "
+        )
+        shell(
+            "make CFG_OVERRIDE={params.hw_config_path}.hjson -C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster sw -j{threads}"
+        )
         shell("touch {output.marker}")
 
 
 rule hardware_build:
     input:
         "{hw_config}.hjson",
-        "hw_{hw_config}_build/generate.done"
+        "hw_{hw_config}_build/generate.done",
     params:
-        hw_config_path= lambda wildcards: Path(wildcards.hw_config).resolve()
+        hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
     output:
         "hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt",
     shell:
