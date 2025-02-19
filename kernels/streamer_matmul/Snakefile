@@ -4,41 +4,54 @@ from quantized_matmul import main as get_quantized_matmul
 from aggregate import aggregate_results, plot_results
 from pathlib import Path
 from shutil import which
+from functools import lru_cache
+import hjson
 
 config = get_snax_gemmx_config(snax_mlir_path="../../snax-mlir")
 
-config["num_chips"] = 1
-config["num_harts"] = 3
+@lru_cache(maxsize=32)
+def get_nb_cores(hw_config: str):
+    with open(hw_config, "r") as file:
+         hw_configuration = hjson.loads(file.read())
+    return len(hw_configuration["cluster"]["hives"][0]["cores"])
 
-config["snaxoptflags"] = ",".join(
-    [
-        "preprocess",
-        "convert-linalg-to-kernel",
-        "insert-accfg-op{accelerator=snax_gemmx}",
-        "dispatch-kernels",
-        "convert-linalg-to-dart",
-        "dart-fuse-operations",
-        "snax-bufferize",
-        "alloc-to-global",
-        "set-memory-space",
-        "dart-scheduler",
-        "set-memory-layout",
-        "realize-memref-casts",
-        "insert-sync-barrier",
-        f"dispatch-regions{{nb_cores={config['num_harts']}}}",
-        "dart-layout-resolution",
-        "convert-dart-to-snax-stream",
-        "convert-linalg-to-accfg",
-        "test-add-mcycle-around-launch",
-        "convert-accfg-to-csr",
-        "snax-copy-to-dma",
-        "snax-lower-mcycle",
-        "memref-to-snax",
-        "snax-to-func",
-        "clear-memory-space",
-        "postprocess",
-    ]
-)
+def get_snaxopt_flags(hw_config: str):
+    get_nb_cores(hw_config)
+    flags = ",".join(
+        [
+            "preprocess",
+            "convert-linalg-to-kernel",
+            "insert-accfg-op{accelerator=snax_gemmx}",
+            "dispatch-kernels",
+            "convert-linalg-to-dart",
+            "dart-fuse-operations",
+            "snax-bufferize",
+            "alloc-to-global",
+            "set-memory-space",
+            "dart-scheduler",
+            "set-memory-layout",
+            "realize-memref-casts",
+            "insert-sync-barrier",
+            f"dispatch-regions{{nb_cores={nb_cores}}}",
+            "dart-layout-resolution",
+            "convert-dart-to-snax-stream",
+            "convert-linalg-to-accfg",
+            "test-add-mcycle-around-launch",
+            "convert-accfg-to-csr",
+            "snax-copy-to-dma",
+            "snax-lower-mcycle",
+            "memref-to-snax",
+            "snax-to-func",
+            "clear-memory-space",
+            "postprocess",
+        ]
+    )
+    return flags
+
+config.pop("num_harts", None)
+config["num_chips"] = 1
+
+config["snaxoptflags"] = )
 
 config["mlirtransformflags"] = [
     "--pass-pipeline='builtin.module(transform-interpreter{debug-bind-trailing-args=linalg.quantized_matmul}, test-transform-dialect-erase-schedule)'"
@@ -52,7 +65,7 @@ module snax_rules:
         config
 
 
-use rule * from snax_rules exclude simulate, compile_c as snax_*
+use rule * from snax_rules exclude simulate, compile_c, snax_opt_mlir as snax_*
 
 
 files = ["quantized_matmul"]
@@ -94,7 +107,7 @@ rule simulate:
                 file=["{file}"],
                 hw_config=["{hw_config}"],
                 num_chips=range(config["num_chips"]),
-                num_harts=range(config["num_harts"]),
+                num_harts=range(get_nb_cores(hw_config)),
             ),
         ),
     log:
