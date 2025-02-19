@@ -232,7 +232,7 @@ rule hardware_build:
         "hw_{hw_config}_build/generate_rtl.done",
     params:
         hw_config_path=lambda wildcards: Path(wildcards.hw_config).resolve(),
-        ccache=lambda _: "OBJCACHE=ccache " if which("ccache") is not None else ""
+        ccache=lambda _: "OBJCACHE=ccache " if which("ccache") is not None else "",
     output:
         "hw_{hw_config}_build/snax_cluster/target/snitch_cluster/bin/snitch_cluster.vlt",
     threads: workflow.cores
