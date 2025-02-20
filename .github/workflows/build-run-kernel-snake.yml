@@ -17,6 +17,20 @@ jobs:
         with:
           cache: true
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      # firtool has to be installed explicitly to avoid race conditions in parallel hw builds
+      - name: Install CIRCT
+        uses: circt/install-circt@v1.1.1
+        with:
+          version: 'firtool-1.62.0'
+      - name: Get snax_cluster submodule commit hash
+        id: get-submodule-commit
+        run: |
+          cd snax_cluster
+          echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ steps.get-submodule-commit.outputs.commit_hash }}
       - name: Build and run kernels
         run: pixi run snakemake -k -p -j `nproc` all
         working-directory: kernels/${{ matrix.kernel }}
