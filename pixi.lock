@@ -155,7 +155,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/make-4.4.1-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mako-1.3.9-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/markupsafe-3.0.2-py312h178313f_1.conda
-      - conda: https://conda.anaconda.org/kuleuven-micas/linux-64/mlir-19.1.1.d401987fe349a87c53fe25829215b80b70c0c1a-hb0f4dca_0.conda
+      - conda: https://conda.anaconda.org/kuleuven-micas/linux-64/mlir-19.1.1.c.d401987fe349a87c53fe25829215b80b70c0c1a-hb0f4dca_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/narwhals-1.26.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/nbformat-5.10.4-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.5-h2d0b736_3.conda
@@ -269,7 +269,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/99/ff/c87e0622b1dadea79d2fb0b25ade9ed98954c9033722eb707053d310d4f3/sympy-1.13.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d0/30/dc54f88dd4a2b5dc8a0279bdd7270e735851848b762aeb1c1184ed1f6b14/tqdm-4.67.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/4b/9a77dc721aa0b7f74440a42e4ef6f9a4fae7324e17f64f88b96f4c25cc05/typeguard-4.4.2-py3-none-any.whl
-      - pypi: git+https://github.com/xdslproject/xdsl.git?rev=668176f288fa4dbfac173e40b538c0020e76c233#668176f288fa4dbfac173e40b538c0020e76c233
+      - pypi: git+https://github.com/xdslproject/xdsl.git@668176f288fa4dbfac173e40b538c0020e76c233
       - pypi: ./
       - pypi: ./snax-mlir
       - pypi: ./zigzag
@@ -2251,11 +2251,11 @@ packages:
   - setuptools-scm>=7 ; extra == 'dev'
   - setuptools>=64 ; extra == 'dev'
   requires_python: '>=3.10'
-- conda: https://conda.anaconda.org/kuleuven-micas/linux-64/mlir-19.1.1.d401987fe349a87c53fe25829215b80b70c0c1a-hb0f4dca_0.conda
-  sha256: 7acf5a91f899a4615ecf2cea64ca3325df3df2c118b4f783a9b2aed7874a249b
-  md5: fa36d905863939968e31473f6fa8280b
-  size: 47090078
-  timestamp: 1734438399731
+- conda: https://conda.anaconda.org/kuleuven-micas/linux-64/mlir-19.1.1.c.d401987fe349a87c53fe25829215b80b70c0c1a-hb0f4dca_0.conda
+  sha256: ae082f0b8d9c39916a81e083b89d7577ed377048f41cc339eaa0e982e8a03cfa
+  md5: 46bc97854617f9df01e47c5505f0f7bc
+  size: 43010488
+  timestamp: 1741358904582
 - pypi: https://files.pythonhosted.org/packages/43/e3/7d92a15f894aa0c9c4b49b8ee9ac9850d6e63b03c9c32c0367a13ae62209/mpmath-1.3.0-py3-none-any.whl
   name: mpmath
   version: 1.3.0
@@ -2630,7 +2630,7 @@ packages:
 - pypi: ./
   name: praxis
   version: 0.0.1
-  sha256: 44e78b1f7392117eb0e785fc7925b1a19dd06d000adfbfed0a69f87770d9d5b0
+  sha256: 2fc26d5f2405083e8b424ee37453d01c96e04186477cdd7f7eaa799bc8719236
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/pre-commit-4.1.0-pyha770c72_0.conda
@@ -3075,6 +3075,8 @@ packages:
   - throttler >=1.2.2,<2.0.0
   license: MIT
   license_family: MIT
+  purls:
+  - pkg:pypi/snakemake-interface-executor-plugins?source=hash-mapping
   size: 22863
   timestamp: 1734791239397
 - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-report-plugins-1.1.0-pyhdfd78af_0.tar.bz2
@@ -3096,6 +3098,8 @@ packages:
   - throttler >=1.2.2,<2.0.0
   - wrapt >=1.15.0,<2.0.0
   license: MIT
+  purls:
+  - pkg:pypi/snakemake-interface-storage-plugins?source=hash-mapping
   size: 18653
   timestamp: 1724066710607
 - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-minimal-8.28.0-pyhdfd78af_0.tar.bz2
@@ -3430,7 +3434,7 @@ packages:
   - pkg:pypi/wrapt?source=hash-mapping
   size: 63590
   timestamp: 1736869574299
-- pypi: git+https://github.com/xdslproject/xdsl.git?rev=668176f288fa4dbfac173e40b538c0020e76c233#668176f288fa4dbfac173e40b538c0020e76c233
+- pypi: git+https://github.com/xdslproject/xdsl.git@668176f288fa4dbfac173e40b538c0020e76c233
   name: xdsl
   version: 0.27.0+54.g668176f2
   requires_dist:
