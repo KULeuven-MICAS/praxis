@@ -58,7 +58,8 @@ use rule * from snax_rules exclude simulate, compile_c as snax_*
 
 files = ["quantized_matmul"]
 
-values = [16, 32]
+values = [64, 72, 96]
+# 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112
 
 configs = ["cfg1", "cfg2"]
 
@@ -108,7 +109,7 @@ rule get_zigzag_fixed_mapping:
     output:
         "gemm_l1_map_{m}_{n}_{k}.yaml",
     run:
-        generate_default_mapping(wildcards.m, wildcards.n, wildcards.k)
+        generate_default_mapping(int(wildcards.m), int(wildcards.n), int(wildcards.k))
 
 
 rule get_zigzag_cme:
