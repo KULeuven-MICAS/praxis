@@ -6,7 +6,7 @@ from xdsl.dialects.builtin import ModuleOp
 from snaxc.tools.snax_opt_main import SNAXOptMain
 
 from praxis.transforms import get_all_passes
-from praxis.backend.zigzag import get_zigzag_cme
+from praxis.backend.zigzag import dump_zigzag_workload, get_zigzag_cme
 
 
 class PraxisMain(SNAXOptMain):
@@ -67,6 +67,9 @@ class PraxisMain(SNAXOptMain):
         This version is adapted to, upon -t zigzag:
         - write to a binary stream
         - call zigzag with cli arguments (not typically done for targets)"
+        And to, upon -t zigzag-workload
+        - write to a yaml string stream
+        - call the backend function to convert workloads to a yaml file"
         """
         if self.args.target not in self.available_targets:
             raise Exception(f"Unknown target {self.args.target}")
@@ -82,7 +85,13 @@ class PraxisMain(SNAXOptMain):
             )
         else:
             output = StringIO()
-            self.available_targets[self.args.target](prog, output)
+            if self.args.target == "zigzag-workload":
+                dump_zigzag_workload(
+                    prog,
+                    output,
+                )
+            else:
+                self.available_targets[self.args.target](prog, output)
         return output.getvalue()
 
     def register_all_targets(self):
@@ -91,6 +100,7 @@ class PraxisMain(SNAXOptMain):
         function can not call a target function with arguments"""
         super().register_all_targets()
         self.available_targets["zigzag"] = lambda prog, output: None
+        self.available_targets["zigzag-workload"] = lambda prog, output: None
 
 
 def main():
