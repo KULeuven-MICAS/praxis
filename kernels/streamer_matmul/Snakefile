@@ -108,7 +108,7 @@ rule get_zigzag_fixed_mapping:
     output:
         "gemm_l1_map_{m}_{n}_{k}.yaml",
     run:
-        generate_default_mapping(m, n, k)
+        generate_default_mapping(wildcards.m, wildcards.n, wildcards.k)
 
 
 rule get_zigzag_cme:
