@@ -103,11 +103,13 @@ rule simulate:
     shell:
         "{input.simulator} --prefix-trace={wildcards.file}_{wildcards.hw_config}_ {input.binary}  2>&1 | tee {log}"
 
+
 rule get_zigzag_fixed_mapping:
     output:
         "gemm_l1_map_{m}_{n}_{k}.yaml",
     run:
-        generate_default_mapping(m,n,k)
+        generate_default_mapping(m, n, k)
+
 
 rule get_zigzag_cme:
     input:

@@ -1,10 +1,4 @@
 def generate_default_mapping(M, N, K):
-    """
-    Generate a default mapping configuration with specified spatial and temporal characteristics.
-    
-    Returns:
-    str: A YAML string representing the mapping configuration
-    """
     template = f"""
     - name: default
       spatial_mapping:
