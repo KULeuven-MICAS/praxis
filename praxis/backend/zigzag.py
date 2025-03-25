@@ -112,7 +112,7 @@ def generate_zigzag_workload(generic_op: GenericOp):
 
     zigzag_description["operand_precision"] = dict()
     zigzag_description["operand_precision"]["O"] = widths[-1]
-    zigzag_description["operand_precision"]["O_final"] = widths[-1]
+    zigzag_description["operand_precision"]["O_final"] = widths[0]
     zigzag_description["operand_precision"]["W"] = widths[0]
     zigzag_description["operand_precision"]["I"] = widths[1]
 
