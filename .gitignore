@@ -71,3 +71,8 @@ cover/
 # pixi environments
 .pixi
 *.egg-info`
+
+*.vltlog
+*.pickle
+*.mlir
+*build*/
