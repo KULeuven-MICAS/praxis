@@ -1,6 +1,7 @@
 import importlib.resources
 import logging
 import pickle
+import yaml
 from xdsl.dialects.transform import TileOp
 from typing import IO, Any, cast
 from xdsl.dialects.builtin import IntegerType, ModuleOp, ShapedType, ContainerType
@@ -237,6 +238,21 @@ def praxis_zigzag_wrapper(
     cmes = cast(list[tuple[CostModelEvaluation, Any]], cmes[0][1])
 
     return cmes
+
+def dump_zigzag_workload(
+    module: ModuleOp,
+    output: IO,
+    ) -> None:
+    for op in module.body.walk():
+        if isinstance(op, GenericOp):
+            generic_op = op
+            if len(generic_op.outputs) != 1:
+                return
+            if not isinstance(generic_op.outputs[0].type, ShapedType):
+                return
+            # generate zigzag workload
+            workload = generate_zigzag_workload(generic_op)
+            yaml.dump(workload, output)
 
 
 def get_zigzag_cme(
