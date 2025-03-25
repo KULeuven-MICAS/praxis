@@ -2,6 +2,7 @@ from util.snake.configs import get_snax_gemmx_config
 from util.snake.flags import get_cc_flags, get_ld_flags
 from quantized_matmul import main as get_quantized_matmul
 from aggregate import aggregate_results, plot_results
+from generate_mapping import generate_default_mapping
 from pathlib import Path
 from shutil import which
 
@@ -102,14 +103,20 @@ rule simulate:
     shell:
         "{input.simulator} --prefix-trace={wildcards.file}_{wildcards.hw_config}_ {input.binary}  2>&1 | tee {log}"
 
+rule get_zigzag_fixed_mapping:
+    output:
+        "gemm_l1_map_{m}_{n}_{k}.yaml",
+    run:
+        generate_default_mapping(m,n,k)
 
 rule get_zigzag_cme:
     input:
         "{file}_{m}_{n}_{k}.mlir",
+        "gemm_l1_map_{m}_{n}_{k}.yaml",
     output:
         "{file}_{m}_{n}_{k}_cmes.pickle",
     shell:
-        "praxis-opt -p preprocess {input[0]} -t zigzag -o {output[0]}"
+        "praxis-opt -p preprocess {input[0]} -t zigzag --zigzag-map={input[1]} -o {output[0]}"
 
 
 rule get_dataframe:
