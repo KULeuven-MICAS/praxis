@@ -71,9 +71,9 @@ def generate_zigzag_workload(generic_op: GenericOp):
         input_w_access += f"[{str(map)}]"
 
     # assume MAC
-    zigzag_description[
-        "equation"
-    ] = f"{output_access}+={input_i_access}*{input_w_access}"
+    zigzag_description["equation"] = (
+        f"{output_access}+={input_i_access}*{input_w_access}"
+    )
 
     # extract dimension_relations
     # for matmul, this is empty
@@ -239,10 +239,11 @@ def praxis_zigzag_wrapper(
 
     return cmes
 
+
 def dump_zigzag_workload(
     module: ModuleOp,
     output: IO,
-    ) -> None:
+) -> None:
     for op in module.body.walk():
         if isinstance(op, GenericOp):
             generic_op = op
