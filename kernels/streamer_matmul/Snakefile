@@ -249,5 +249,7 @@ rule hardware_build:
         "{params.ccache}make CFG_OVERRIDE={params.hw_config_path}.hjson "
         "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads}"
 
+
 rule rm_generated_files:
-    shell : "rm -f *.vltlog *.mlir *.yaml *.pickle *.o *.x *.dasm *.hd5 *.html"
+    shell:
+        "rm -f *.vltlog *.mlir *.yaml *.pickle *.o *.x *.dasm *.hd5 *.html"
