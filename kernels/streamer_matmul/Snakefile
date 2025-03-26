@@ -118,7 +118,7 @@ rule get_zigzag_cme:
     output:
         "{file}_{m}_{n}_{k}_cmes.pickle",
     shell:
-        "praxis-opt -p preprocess {input[0]} -t zigzag --zigzag-map={input[1]} -o {output[0]}"
+        "praxis-opt -p preprocess {input[0]} -t zigzag --zigzag-map={input[1]} --zigzag-hw=../../zigzag/zigzag/inputs/hardware/gemm_l1.yaml -o {output[0]}"
 
 
 rule get_dataframe:
@@ -248,3 +248,8 @@ rule hardware_build:
     shell:
         "{params.ccache}make CFG_OVERRIDE={params.hw_config_path}.hjson "
         "-C hw_{wildcards.hw_config}_build/snax_cluster/target/snitch_cluster bin/snitch_cluster.vlt -j{threads}"
+
+
+rule rm_generated_files:
+    shell:
+        "rm -f *.vltlog *.mlir *.yaml *.pickle *.o *.x *.dasm *.hd5 *.html"
